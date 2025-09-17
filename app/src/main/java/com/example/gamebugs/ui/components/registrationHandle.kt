@@ -65,6 +65,18 @@ fun RegistrationPanel() {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
+    // Диалог выбора даты
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, day ->
+            calendar.set(year, month, day)
+            birthDate = calendar.timeInMillis
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
 
     Column(
         modifier = Modifier
@@ -84,19 +96,18 @@ fun RegistrationPanel() {
 
         OutlinedTextField(
             value = fullName,
-            onValueChange = { fullName = it },
+            onValueChange = {fullName = it },
             label = { Text("Введите ФИО") },
             modifier = Modifier
                 .fillMaxWidth()
                 .align(alignment = Alignment.Start)
         )
 
-        Text(
-            "Пол:",
+        Text("Пол:",
             fontSize = 18.sp,
             style = MaterialTheme.typography.bodyLarge
         )
-
+        
         Row {
             listOf("Муж", "Жен").forEach { option ->
                 Row(
@@ -112,8 +123,7 @@ fun RegistrationPanel() {
                         selected = (gender == option),
                         onClick = { gender = option }
                     )
-                    Text(
-                        text = option,
+                    Text(text = option,
                         fontSize = 18.sp,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -123,7 +133,7 @@ fun RegistrationPanel() {
 
         // Курс (Dropdown)
         Box {
-            var textBlock by remember { mutableStateOf("course") }
+            var textBlock by remember {mutableStateOf("course")}
             OutlinedButton(onClick = { expanded = true }) {
                 Text(textBlock)
             }
@@ -143,6 +153,79 @@ fun RegistrationPanel() {
                 }
             }
         }
+
+        // Уровень сложности
+        Text("Сложность: ${difficulty.toInt()}")
+        Slider(
+            value = difficulty,
+            onValueChange = { difficulty = it },
+            steps = 3,
+            valueRange = 1f..5f,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Дата рождения
+        OutlinedButton(onClick = { datePickerDialog.show() }) {
+            Text("Выбрать дату рождения")
+        }
+        Text("Дата: ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(birthDate))}")
+
+        // Кнопка регистрации
+        Button(
+            onClick = {
+                val zodiac = getZodiac(birthDate)
+                player = Player(
+                    fullName,
+                    gender,
+                    course,
+                    difficulty.toInt(),
+                    birthDate,
+                    zodiac
+                )
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 5.dp)
+        ) {
+            Text("Зарегистрироваться")
+        }
+
+        // Результат
+        player?.let {
+            Text(
+                """
+                Имя: ${it.name}
+                Пол: ${it.gender}
+                Курс: ${it.course}
+                Сложность: ${it.difficulty}
+                Дата рождения: ${SimpleDateFormat("dd.MM.yyyy").format(Date(it.birthDate))}
+                Знак зодиака: ${it.zodiac}
+            """.trimIndent()
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+        }
+    }
+}
+
+fun getZodiac(dateMillis: Long): String {
+    val cal = Calendar.getInstance()
+    cal.timeInMillis = dateMillis
+    val day = cal.get(Calendar.DAY_OF_MONTH)
+    val month = cal.get(Calendar.MONTH) + 1
+    return when {
+        (day >= 21 && month == 3) || (day <= 20 && month == 4) -> "Овен"
+        (day >= 21 && month == 4) || (day <= 20 && month == 5) -> "Телец"
+        (day >= 21 && month == 5) || (day <= 21 && month == 6) -> "Близнецы"
+        (day >= 22 && month == 6) || (day <= 22 && month == 7) -> "Рак"
+        (day >= 23 && month == 7) || (day <= 22 && month == 8) -> "Лев"
+        (day >= 23 && month == 8) || (day <= 22 && month == 9) -> "Дева"
+        (day >= 23 && month == 9) || (day <= 23 && month == 10) -> "Весы"
+        (day >= 24 && month == 10) || (day <= 22 && month == 11) -> "Скорпион"
+        (day >= 23 && month == 11) || (day <= 21 && month == 12) -> "Стрелец"
+        (day >= 22 && month == 12) || (day <= 20 && month == 1) -> "Козерог"
+        (day >= 21 && month == 1) || (day <= 19 && month == 2) -> "Водолей"
+        (day >= 20 && month == 2) || (day <= 20 && month == 3) -> "Рыбы"
+        else -> "?"
     }
 }
 
