@@ -1,5 +1,6 @@
 package com.example.gamebugs.ui.components
 
+import MainMenuPanel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gamebugs.ui.theme.GameBugsTheme
 
 @Composable
 fun AuthorsPanel() {
@@ -22,7 +25,7 @@ fun AuthorsPanel() {
         ),
         Author(
             name = "Максим Иванов",
-            photoResId = android.R.drawable.ic_menu_delete,
+            photoResId = android.R.drawable.ic_menu_call,
             role = "Разработчик"
         ),
         Author(
@@ -35,7 +38,6 @@ fun AuthorsPanel() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
     ) {
         Text(
             text = "Команда разработчиков",
@@ -119,3 +121,16 @@ data class Author(
     val photoResId: Int,
     val role: String? = null
 )
+
+@Preview
+@Composable
+fun PreviewAuthorsPanel(){
+    GameBugsTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            AuthorsPanel()
+        }
+    }
+}
