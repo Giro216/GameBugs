@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.gamebugs.ui.components.MainActivityGreeting
-import com.example.gamebugs.ui.components.RegistrationPanel
 import com.example.gamebugs.ui.theme.GameBugsTheme
 
 class MainActivity : ComponentActivity() {

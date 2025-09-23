@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,13 +20,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gamebugs.R
+import com.example.gamebugs.ui.components.AuthorsPanel
+import com.example.gamebugs.ui.components.RulesPanel
 import com.example.gamebugs.ui.components.RegistrationPanel
+import com.example.gamebugs.ui.components.SettingsPanel
 import com.example.gamebugs.ui.theme.GameBugsTheme
 
 @Composable
 fun MainMenuPanel(){
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Регистрация", "Профиль", "Настройки")
+    val tabs = listOf("Регистрация", "Правила", "Список авторов", "Настройки")
 
     Column(
         verticalArrangement = Arrangement.Top,
@@ -75,8 +77,9 @@ fun MainMenuPanel(){
             ) {
                 when (selectedTab) {
                     0 -> RegistrationPanel()
-                    1 -> Text("Здесь будет профиль")
-                    2 -> Text("Здесь будут настройки")
+                    1 -> RulesPanel()
+                    2 -> AuthorsPanel()
+                    3 -> SettingsPanel()
                 }
             }
         }

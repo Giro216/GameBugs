@@ -32,3 +32,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+app/src/main/res/drawable-nodpi/bg_compose_background.png
+app/src/main/res/drawable-nodpi/_x8gxzputiy.jpg
+app/src/main/java/com/example/gamebugs/ui/components/Task1_article.kt
