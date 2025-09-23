@@ -2,6 +2,7 @@ package com.example.gamebugs.ui.components
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -81,18 +83,10 @@ fun RegistrationPanel() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(10.dp),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(vertical = 10.dp)
-        )
 
         OutlinedTextField(
             value = fullName,
@@ -101,6 +95,7 @@ fun RegistrationPanel() {
             modifier = Modifier
                 .fillMaxWidth()
                 .align(alignment = Alignment.Start)
+                .padding(vertical = 5.dp)
         )
 
         Text("Пол:",
@@ -166,7 +161,7 @@ fun RegistrationPanel() {
 
         // Дата рождения
         OutlinedButton(onClick = { datePickerDialog.show() }) {
-            Text("Выбрать дату рождения")
+            Text(text = "Выбрать дату рождения")
         }
         Text("Дата: ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(birthDate))}")
 
@@ -200,6 +195,11 @@ fun RegistrationPanel() {
                 Знак зодиака: ${it.zodiac}
             """.trimIndent()
             )
+            
+            Image(
+                painterResource(id = getZodiacImage(it.zodiac)),
+                contentDescription = null
+            )
 
             Spacer(Modifier.height(12.dp))
 
@@ -226,6 +226,14 @@ fun getZodiac(dateMillis: Long): String {
         (day >= 21 && month == 1) || (day <= 19 && month == 2) -> "Водолей"
         (day >= 20 && month == 2) || (day <= 20 && month == 3) -> "Рыбы"
         else -> "?"
+    }
+}
+
+fun getZodiacImage(zodiac: String): Int {
+    return when (zodiac) {
+        "Дева" -> R.drawable.girl1
+        "Рак" -> R.drawable.cansor
+        else -> R.drawable._x8gxzputiy
     }
 }
 
