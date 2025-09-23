@@ -232,7 +232,7 @@ fun getZodiacImage(zodiac: String): Int {
     return when (zodiac) {
         "Дева" -> R.drawable.girl1
         "Рак" -> R.drawable.cansor
-        else -> R.drawable._x8gxzputiy
+        else -> R.drawable.ic_launcher_foreground
     }
 }
 
