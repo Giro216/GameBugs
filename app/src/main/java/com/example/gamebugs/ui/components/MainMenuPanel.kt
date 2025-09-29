@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,17 +20,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.gamebugs.R
 import com.example.gamebugs.ui.components.AuthorsPanel
+import com.example.gamebugs.ui.components.Player
 import com.example.gamebugs.ui.components.RulesPanel
 import com.example.gamebugs.ui.components.RegistrationPanel
 import com.example.gamebugs.ui.components.SettingsPanel
+import com.example.gamebugs.ui.config.AppNavigation
+import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 
 @Composable
-fun MainMenuPanel(){
+fun MainMenuPanel(navController: NavHostController) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Регистрация", "Правила", "Список авторов", "Настройки")
+    var isRegistered by remember { mutableStateOf(false) }
+    var player: Player?
 
     Column(
         verticalArrangement = Arrangement.Top,
@@ -53,6 +60,16 @@ fun MainMenuPanel(){
                 modifier = Modifier
                     .padding(vertical = 20.dp)
             ) {
+
+                Button(
+                    onClick = {
+                        navController.navigate(Screens.Game.route)
+                    },
+                    enabled = isRegistered
+                ) {
+                    Text(text = "Новая игра", style = MaterialTheme.typography.bodyLarge)
+                }
+
                 tabs.forEachIndexed { index, title ->
                     Text(
                         text = title,
@@ -76,7 +93,14 @@ fun MainMenuPanel(){
                     .padding(10.dp)
             ) {
                 when (selectedTab) {
-                    0 -> RegistrationPanel()
+                    0 -> {
+                        RegistrationPanel(
+                            onRegisteredPlayer = { registeredPlayer ->
+                                player = registeredPlayer
+                                isRegistered = true
+                            }
+                        )
+                    }
                     1 -> RulesPanel()
                     2 -> AuthorsPanel()
                     3 -> SettingsPanel()
@@ -95,7 +119,7 @@ fun PreviewMainMenuPanel(){
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            MainMenuPanel()
+            AppNavigation()
         }
     }
 }

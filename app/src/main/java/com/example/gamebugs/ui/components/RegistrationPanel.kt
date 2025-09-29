@@ -53,7 +53,9 @@ data class Player(
 
 @SuppressLint("SimpleDateFormat")
 @Composable
-fun RegistrationPanel() {
+fun RegistrationPanel(
+    onRegisteredPlayer: (Player) -> Unit = {} // Callback при регистрации
+) {
     // Состояния для хранения введённых данных
     var fullName by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
@@ -61,7 +63,7 @@ fun RegistrationPanel() {
     var difficulty by remember { mutableStateOf(1f) }
     var expanded by remember { mutableStateOf(false) }
     var birthDate by remember { mutableStateOf(System.currentTimeMillis()) }
-    var player by remember { mutableStateOf<Player?>(null) }
+    var isRegistered by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -78,7 +80,6 @@ fun RegistrationPanel() {
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -89,7 +90,7 @@ fun RegistrationPanel() {
 
         OutlinedTextField(
             value = fullName,
-            onValueChange = {fullName = it },
+            onValueChange = { fullName = it },
             label = { Text("Введите ФИО") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -101,7 +102,7 @@ fun RegistrationPanel() {
             fontSize = 18.sp,
             style = MaterialTheme.typography.bodyLarge
         )
-        
+
         Row {
             listOf("Муж", "Жен").forEach { option ->
                 Row(
@@ -127,7 +128,7 @@ fun RegistrationPanel() {
 
         // Курс (Dropdown)
         Box {
-            var textBlock by remember {mutableStateOf("course")}
+            var textBlock by remember { mutableStateOf("Выберите курс") }
             OutlinedButton(onClick = { expanded = true }) {
                 Text(textBlock)
             }
@@ -167,41 +168,45 @@ fun RegistrationPanel() {
         // Кнопка регистрации
         Button(
             onClick = {
-                val zodiac = getZodiac(birthDate)
-                player = Player(
-                    fullName,
-                    gender,
-                    course,
-                    difficulty.toInt(),
-                    birthDate,
-                    zodiac
-                )
+                if (fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()) {
+                    val zodiac = getZodiac(birthDate)
+                    val player = Player(
+                        fullName,
+                        gender,
+                        course,
+                        difficulty.toInt(),
+                        birthDate,
+                        zodiac
+                    )
+                    isRegistered = true
+                    onRegisteredPlayer(player) // Вызываем callback
+                }
             },
-            modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 5.dp)
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 5.dp),
+            enabled = fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()
         ) {
             Text("Зарегистрироваться")
         }
 
         // Результат
-        player?.let {
+        if (isRegistered) {
             Text(
                 """
-                Имя: ${it.name}
-                Пол: ${it.gender}
-                Курс: ${it.course}
-                Сложность: ${it.difficulty}
-                Дата рождения: ${SimpleDateFormat("dd.MM.yyyy").format(Date(it.birthDate))}
-                Знак зодиака: ${it.zodiac}
+                Имя: $fullName
+                Пол: $gender
+                Курс: $course
+                Сложность: ${difficulty.toInt()}
+                Дата рождения: ${SimpleDateFormat("dd.MM.yyyy").format(Date(birthDate))}
+                Знак зодиака: ${getZodiac(birthDate)}
             """.trimIndent()
             )
-            
+
             Image(
-                painterResource(id = getZodiacImage(it.zodiac)),
+                painterResource(id = getZodiacImage(getZodiac(birthDate))),
                 contentDescription = null
             )
 
             Spacer(Modifier.height(12.dp))
-
         }
     }
 }
@@ -244,7 +249,9 @@ fun RegistrationPanelPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            RegistrationPanel()
+            RegistrationPanel(
+                onRegisteredPlayer = {}
+            )
         }
     }
 }
