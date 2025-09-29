@@ -65,7 +65,7 @@ fun MainMenuPanel(navController: NavHostController) {
                     onClick = {
                         navController.navigate(Screens.Game.route)
                     },
-                    enabled = isRegistered
+//                    enabled = isRegistered
                 ) {
                     Text(text = "Новая игра", style = MaterialTheme.typography.bodyLarge)
                 }
