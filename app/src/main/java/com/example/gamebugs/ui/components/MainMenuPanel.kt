@@ -31,15 +31,13 @@ import com.example.gamebugs.ui.config.Screens
 @Composable
 fun MainMenuPanel(
     navController: NavHostController,
-    player: Player?,  // Принимаем извне
-    settings: Settings?,  // Принимаем извне
+    player: Player?,
+    settings: Settings?,
     onPlayerUpdated: (Player?) -> Unit,
     onSettingsUpdated: (Settings?) -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Регистрация", "Правила", "Список авторов", "Настройки")
-
-    // Локальное состояние для отображения
     var isRegistered by remember { mutableStateOf(player != null) }
 
     Column(
@@ -54,7 +52,6 @@ fun MainMenuPanel(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        // Показываем информацию о зарегистрированном игроке
         if (isRegistered && player != null) {
             Text(
                 text = "Игрок: ${player.name}",
@@ -69,7 +66,7 @@ fun MainMenuPanel(
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Левая колонка с "вкладками"
+            // Левая колонка
             Column(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(vertical = 20.dp)
@@ -103,6 +100,7 @@ fun MainMenuPanel(
                 }
             }
 
+            // область справа
             Box(
                 modifier = Modifier
                     .weight(1f)

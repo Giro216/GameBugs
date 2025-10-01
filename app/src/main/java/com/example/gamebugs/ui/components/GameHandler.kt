@@ -43,25 +43,25 @@ import kotlin.math.max
 
 @Composable
 fun BugItem(
+    modifier: Modifier = Modifier,
     bug: Bug,
     onBugSquashed: (Int) -> Unit,
     screenWidth: Float,
     screenHeight: Float,
-    modifier: Modifier = Modifier
+    gameSpeed: Float = 1.0f,
+
 ) {
-    // Независимые состояния для каждого жука
     var position by remember { mutableStateOf(bug.getPosition()) }
     var isAlive by remember { mutableStateOf(bug.isAlive()) }
     var health by remember { mutableIntStateOf(bug.state.health) }
     val bugSize = 80.dp
 
-//     Анимация движения
-    LaunchedEffect(bug) {
+    LaunchedEffect(bug, gameSpeed) {
         while (true) {
-            delay(16) // ~60 FPS
+            delay(16)
             if (isAlive) {
                 bug.move(screenWidth, screenHeight)
-                    position = bug.getPosition()
+                position = bug.getPosition()
             } else {
                 break
             }
@@ -74,13 +74,11 @@ fun BugItem(
         health = bug.state.health
     }
 
-    // Анимация исчезновения
     val scale by animateFloatAsState(
         targetValue = if (isAlive) 1f else 0f,
         animationSpec = tween(durationMillis = 300)
     )
 
-    // Показываем пока не исчезнет полностью
     if (scale > 0.01f) {
         Image(
             painter = bug.getImage(),
@@ -104,28 +102,30 @@ fun BugItem(
     }
 }
 
-// TODO использовать настройки из главного меню
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun GameHandler(
     navController: NavHostController,
-    settings: Settings,  // Принимаем настройки
-    player: Player       // Принимаем игрока
+    settings: Settings,
+    player: Player
 ) {
     val configuration = LocalConfiguration.current
     var totalScore by remember { mutableIntStateOf(0) }
-    var gameState by remember { mutableStateOf("playing") } // playing, paused, gameOver
-
+    var gameState by remember { mutableStateOf("playing") }
     var gameSessionKey by remember { mutableIntStateOf(0) }
+    var gameTime by remember { mutableIntStateOf(0) }
+    var roundTimeLeft by remember { mutableIntStateOf(settings.roundDuration) }
 
     var screenSize by remember { mutableStateOf(Pair(configuration.screenWidthDp.toFloat(), configuration.screenHeightDp.toFloat())) }
     val screenWidth = screenSize.first
     val screenHeight = screenSize.second
 
     val penalty = 2
+    val bonusInterval = settings.bonusInterval
+    val roundDuration = settings.roundDuration
 
     fun createInitialBugs(): List<Bug> {
-        return List(10) {
+        return List(settings.maxBeetles) {
             val bug = BugFactory.createRandomBug()
             bug.setRandomPosition(
                 configuration.screenWidthDp - 80,
@@ -135,16 +135,46 @@ fun GameHandler(
         }
     }
 
-    // Используем ключ в remember для принудительного пересоздания
     var bugs by remember(gameSessionKey) {
         mutableStateOf(createInitialBugs())
+    }
+
+    LaunchedEffect(gameState, gameSessionKey) {
+        if (gameState == "playing") {
+            while (gameTime < roundDuration && gameState == "playing") {
+                delay(1000)
+                gameTime++
+                roundTimeLeft = roundDuration - gameTime
+
+                if (gameTime % bonusInterval == 0 && gameTime > 0) {
+                    spawnBonusBug()
+                }
+
+                val allBugsDead = bugs.all {!it.isAlive()}
+                if (gameTime >= roundDuration || allBugsDead) {
+                    gameState = "gameOver"
+                }
+            }
+        }
+    }
+
+    fun spawnNewBug() {
+        if (bugs.size < settings.maxBeetles) {
+            val newBug = BugFactory.createRandomBug()
+            newBug.setRandomPosition(
+                configuration.screenWidthDp - 80,
+                configuration.screenHeightDp - 80
+            )
+            bugs = bugs + newBug
+        }
     }
 
     fun restartGame() {
         totalScore = 0
         gameSessionKey++
         gameState = "playing"
-
+        gameTime = 0
+        roundTimeLeft = settings.roundDuration
         bugs = createInitialBugs()
     }
 
@@ -154,15 +184,41 @@ fun GameHandler(
 
     fun handleHit(reward: Int) {
         totalScore += reward
+//        LaunchedEffect(Unit) {
+//            delay(1000)
+//            if (gameState == "playing") {
+//                spawnNewBug()
+//            }
+//        }
     }
 
     @Composable
     fun onPaused() {
-        // TODO переделать
-        // Добавляем небольшую задержку для стабильности навигации
         LaunchedEffect(Unit) {
             delay(100)
             navController.navigate(Screens.MainMenu.route)
+        }
+    }
+
+    @Composable
+    fun onGameOver() {
+        LaunchedEffect(Unit) {
+            delay(3000)
+            navController.navigate(Screens.MainMenu.route)
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Игра окончена!\nФинальный счет: $totalScore",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onError,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
         }
     }
 
@@ -174,36 +230,47 @@ fun GameHandler(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) {
-                // Обработка клика по пустому месту (промах)
                 if (gameState == "playing") {
                     handleMiss()
                 }
             }
     ) {
-        println("Сессия: $gameSessionKey | Жуков: ${bugs.size}")
-
+        // Фон
         Image(
-            painter = painterResource(R.drawable.lawn2), // ваша картинка фона
+            painter = painterResource(R.drawable.lawn2),
             contentDescription = "Фон игры",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop // или FillBounds, FillWidth, etc.
+            contentScale = ContentScale.Crop
         )
 
-        // Интерфейс игры
+        Text(
+            text = "Время: ${roundTimeLeft}с",
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(vertical = 30.dp)
+                .background(
+                    MaterialTheme.colorScheme.secondary,
+                    MaterialTheme.shapes.small
+                )
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+
         Text(
             text = "Счет: $totalScore",
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(30.dp)
                 .background(
-                    MaterialTheme.colorScheme.secondary,
+                    MaterialTheme.colorScheme.primary,
                     MaterialTheme.shapes.small
-                ),
+                )
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onPrimary
         )
 
-        // Управление игрой
         Image(
             painter = painterResource(android.R.drawable.ic_media_pause),
             contentDescription = "Pause",
@@ -211,12 +278,11 @@ fun GameHandler(
                 .align(Alignment.TopStart)
                 .padding(vertical = 30.dp, horizontal = 10.dp)
                 .size(60.dp)
-                .clickable(){
+                .clickable {
                     gameState = "paused"
                 }
         )
 
-        // Кнопка перезапуска
         Text(
             text = "Новая игра",
             modifier = Modifier
@@ -236,7 +302,7 @@ fun GameHandler(
         when(gameState) {
             "playing" -> {
                 bugs.forEachIndexed { index, bug ->
-                    key("bug_${gameSessionKey}_$index") { // Уникальный ключ
+                    key("bug_${gameSessionKey}_$index") {
                         BugItem(
                             bug = bug,
                             onBugSquashed = { reward ->
@@ -244,6 +310,7 @@ fun GameHandler(
                             },
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
+                            gameSpeed = settings.gameSpeed,
                             modifier = Modifier
                         )
                     }
@@ -252,13 +319,15 @@ fun GameHandler(
             "paused" -> {
                 onPaused()
             }
-
             "gameOver" -> {
-                // TODO дописать выход из игры с сохранением результата
+                onGameOver()
             }
         }
-
     }
+}
+
+private fun spawnBonusBug() {
+    TODO("Not yet implemented")
 }
 
 @Preview
@@ -272,10 +341,10 @@ fun GameHandlerPreview() {
             val mockNavController = rememberNavController()
 
             val mockSettings = Settings(
-                gameSpeed = 1.0f,
-                maxBeetles = 5,
-                bonusInterval = 15,
-                roundDuration = 60
+                gameSpeed = 1.5f,
+                maxBeetles = 8,
+                bonusInterval = 10,
+                roundDuration = 120
             )
 
             val mockPlayer = Player(

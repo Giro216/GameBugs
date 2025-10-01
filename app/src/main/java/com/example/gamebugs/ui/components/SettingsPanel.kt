@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 
 data class Settings(
     var gameSpeed: Float,
@@ -44,7 +43,6 @@ fun SettingsPanel(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        // Скорость игры
         SettingItem(
             title = "Скорость игры",
             description = "Коэффициент скорости движения тараканов (например: 1.0 - нормальная, 2.0 - в 2 раза быстрее)",
@@ -53,7 +51,6 @@ fun SettingsPanel(
             keyboardType = KeyboardType.Decimal
         )
 
-        // Максимальное количество тараканов
         SettingItem(
             title = "Максимальное количество тараканов",
             description = "Сколько тараканов может одновременно находиться на экране",
@@ -62,7 +59,6 @@ fun SettingsPanel(
             keyboardType = KeyboardType.Number
         )
 
-        // Интервал появления бонусов
         SettingItem(
             title = "Интервал появления бонусов",
             description = "Время в секундах между появлением бонусов",
@@ -71,7 +67,6 @@ fun SettingsPanel(
             keyboardType = KeyboardType.Number
         )
 
-        // Длительность раунда
         SettingItem(
             title = "Длительность раунда",
             description = "Продолжительность раунда в секундах",
@@ -80,7 +75,6 @@ fun SettingsPanel(
             keyboardType = KeyboardType.Number
         )
 
-        // Кнопка сохранения
         Button(
             onClick = {
                 if (gameSpeed.isNotBlank() && maxBeetles.isNotBlank() && bonusInterval.isNotBlank() && roundDuration.isNotBlank()) {
@@ -99,30 +93,6 @@ fun SettingsPanel(
         ) {
             Text("Сохранить настройки")
         }
-        
-        /*       
-         Button(
-            onClick = {
-                if (fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()) {
-                    val zodiac = getZodiac(birthDate)
-                    val player = Player(
-                        fullName,
-                        gender,
-                        course,
-                        difficulty.toInt(),
-                        birthDate,
-                        zodiac
-                    )
-                    isRegistered = true
-                    onRegisteredPlayer(player) // Вызываем callback
-                }
-            },
-            modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 5.dp),
-            enabled = fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()
-        ) {
-            Text("Зарегистрироваться")
-        }
-        */
     }
 }
 

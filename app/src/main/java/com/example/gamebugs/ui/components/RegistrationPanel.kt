@@ -54,9 +54,8 @@ data class Player(
 @SuppressLint("SimpleDateFormat")
 @Composable
 fun RegistrationPanel(
-    onRegisteredPlayer: (Player) -> Unit = {} // Callback при регистрации
+    onRegisteredPlayer: (Player) -> Unit = {}
 ) {
-    // Состояния для хранения введённых данных
     var fullName by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
     var course by remember { mutableStateOf("") }
@@ -68,7 +67,6 @@ fun RegistrationPanel(
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
-    // Диалог выбора даты
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, day ->
@@ -126,7 +124,6 @@ fun RegistrationPanel(
             }
         }
 
-        // Курс (Dropdown)
         Box {
             var textBlock by remember { mutableStateOf("Выберите курс") }
             OutlinedButton(onClick = { expanded = true }) {
@@ -149,7 +146,6 @@ fun RegistrationPanel(
             }
         }
 
-        // Уровень сложности
         Text("Сложность: ${difficulty.toInt()}")
         Slider(
             value = difficulty,
@@ -159,13 +155,11 @@ fun RegistrationPanel(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Дата рождения
         OutlinedButton(onClick = { datePickerDialog.show() }) {
             Text(text = "Выбрать дату рождения")
         }
         Text("Дата: ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(birthDate))}")
 
-        // Кнопка регистрации
         Button(
             onClick = {
                 if (fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()) {
@@ -179,7 +173,7 @@ fun RegistrationPanel(
                         zodiac
                     )
                     isRegistered = true
-                    onRegisteredPlayer(player) // Вызываем callback
+                    onRegisteredPlayer(player)
                 }
             },
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 5.dp),

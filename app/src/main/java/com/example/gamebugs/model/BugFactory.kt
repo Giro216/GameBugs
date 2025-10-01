@@ -1,6 +1,5 @@
 package com.example.gamebugs.model
 
-// Фабрика для создания жуков
 object BugFactory {
     fun createSpiderBug(): Bug = SpiderBug()
     fun createCockroachBug(): Bug = CockroachBug()

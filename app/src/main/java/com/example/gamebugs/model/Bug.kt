@@ -7,24 +7,21 @@ import com.example.gamebugs.R
 import kotlin.math.cos
 import kotlin.math.sin
 
-// Data class для состояния жука
 data class BugState(
     var position: Pair<Float, Float> = Pair(0f, 0f),
     var health: Int = 1,
     var isAlive: Boolean = true,
     var isVisible: Boolean = true,
-    var direction: Float = 0f, // направление движения в радианах
-    var movementPhase: Float = 0f // фаза для периодического движения
+    var direction: Float = 0f,
+    var movementPhase: Float = 0f
 )
 
-// Enum для типов жуков
 enum class BugType(val imageRes: Int, val basePoints: Int, val speed: Float) {
     SPIDER(R.drawable.spider, 20, 3f),
     COCKROACH(R.drawable.cockroach, 35, 2f),
-    RHINOCEROS(R.drawable.rhinoceros, 35, 0.2f)
+    RHINOCEROS(R.drawable.rhinoceros, 35, 0.0002f)
 }
 
-// Основной класс Bug
 abstract class Bug(
     val type: BugType,
     var state: BugState = BugState()
@@ -41,15 +38,14 @@ abstract class Bug(
                 (80 until maxX - 80).random().toFloat(),
                 (80 until maxY - 80).random().toFloat()
             ),
-            direction = (0 until 360).random().toFloat() * (Math.PI.toFloat() / 180f), // случайное направление
-            movementPhase = (0 until 100).random().toFloat() // случайная фаза
+            direction = (0 until 360).random().toFloat() * (Math.PI.toFloat() / 180f),
+            movementPhase = (0 until 100).random().toFloat()
         )
     }
 
     @Composable
     fun getImage(): Painter = painterResource(type.imageRes)
 
-    // Общая функция для проверки столкновений с границами
     protected fun checkBoundaries(newX: Float, newY: Float, screenWidth: Float, screenHeight: Float): Pair<Float, Float> {
         var x = newX
         var y = newY
@@ -76,18 +72,16 @@ abstract class Bug(
     }
 }
 
-// Конкретные классы
 class SpiderBug : Bug(BugType.SPIDER) {
     // Паук двигается прямолинейно с случайными изменениями направления
     override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        if (Math.random() < 0.02) { // 2% шанс изменить направление
+        if (Math.random() < 0.02) {
             state.direction += (Math.random() - 0.5).toFloat() * 0.5f
         }
 
         val newX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed
         val newY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed
 
-        // Проверяем границы
         val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
 
         state = state.copy(
@@ -115,7 +109,6 @@ class CockroachBug : Bug(BugType.COCKROACH) {
         val newX = baseX + cos(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
         val newY = baseY + sin(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
 
-        // Проверяем границы
         val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
 
         state = state.copy(
@@ -136,23 +129,21 @@ class CockroachBug : Bug(BugType.COCKROACH) {
 }
 
 class RhinocerosBug : Bug(BugType.RHINOCEROS) {
-    // Носорог двигается по круговой траектории
+    // Носорог двигается по кругу
     override fun move(screenWidth: Float, screenHeight: Float): BugState {
         state.movementPhase += 0.05f
 
-        val circleRadius = 50f
+        val circleRadius = 30f
         val centerX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed * 0.5f
         val centerY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed * 0.5f
 
         val newX = centerX + cos(state.movementPhase.toDouble()).toFloat() * circleRadius
         val newY = centerY + sin(state.movementPhase.toDouble()).toFloat() * circleRadius
 
-        // Периодически меняем основное направление
         if (Math.random() < 0.1) {
             state.direction = (Math.random() * Math.PI * 2).toFloat()
         }
 
-        // Проверяем границы
         val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
 
         state = state.copy(
