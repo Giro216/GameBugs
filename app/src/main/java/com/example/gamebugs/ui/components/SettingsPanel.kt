@@ -11,13 +11,23 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
+data class Settings(
+    var gameSpeed: Float,
+    var maxBeetles: Int,
+    var bonusInterval: Int,
+    var roundDuration: Int
+)
+
 @Composable
-fun SettingsPanel() {
+fun SettingsPanel(
+    onSavedSettings: (Settings) -> Unit = {} // Callback
+) {
     // Состояния для хранения значений настроек
     var gameSpeed by remember { mutableStateOf("1.0") }
-    var maxCockroaches by remember { mutableStateOf("10") }
+    var maxBeetles by remember { mutableStateOf("10") }
     var bonusInterval by remember { mutableStateOf("15") }
     var roundDuration by remember { mutableStateOf("60") }
+
 
     val scrollState = rememberScrollState()
 
@@ -47,8 +57,8 @@ fun SettingsPanel() {
         SettingItem(
             title = "Максимальное количество тараканов",
             description = "Сколько тараканов может одновременно находиться на экране",
-            value = maxCockroaches,
-            onValueChange = { maxCockroaches = it },
+            value = maxBeetles,
+            onValueChange = { maxBeetles = it },
             keyboardType = KeyboardType.Number
         )
 
@@ -73,13 +83,15 @@ fun SettingsPanel() {
         // Кнопка сохранения
         Button(
             onClick = {
-                // Здесь будет логика сохранения настроек
-                // Пока просто выводим значения в консоль
-                println("Сохранены настройки:")
-                println("Скорость: $gameSpeed")
-                println("Макс. тараканов: $maxCockroaches")
-                println("Интервал бонусов: $bonusInterval")
-                println("Длительность раунда: $roundDuration")
+                if (gameSpeed.isNotBlank() && maxBeetles.isNotBlank() && bonusInterval.isNotBlank() && roundDuration.isNotBlank()) {
+                    val settings = Settings(
+                        gameSpeed.toFloat(),
+                        maxBeetles.toInt(),
+                        bonusInterval.toInt(),
+                        roundDuration.toInt()
+                    )
+                    onSavedSettings(settings)
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -87,6 +99,30 @@ fun SettingsPanel() {
         ) {
             Text("Сохранить настройки")
         }
+        
+        /*       
+         Button(
+            onClick = {
+                if (fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()) {
+                    val zodiac = getZodiac(birthDate)
+                    val player = Player(
+                        fullName,
+                        gender,
+                        course,
+                        difficulty.toInt(),
+                        birthDate,
+                        zodiac
+                    )
+                    isRegistered = true
+                    onRegisteredPlayer(player) // Вызываем callback
+                }
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 5.dp),
+            enabled = fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()
+        ) {
+            Text("Зарегистрироваться")
+        }
+        */
     }
 }
 

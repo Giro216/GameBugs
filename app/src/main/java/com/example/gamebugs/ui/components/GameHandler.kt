@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -25,7 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,189 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
+import com.example.gamebugs.model.Bug
+import com.example.gamebugs.model.BugFactory
 import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import kotlinx.coroutines.delay
-import kotlin.math.cos
-import kotlin.math.sin
-
-// Data class для состояния жука
-data class BugState(
-    var position: Pair<Float, Float> = Pair(0f, 0f),
-    var health: Int = 1,
-    var isAlive: Boolean = true,
-    var isVisible: Boolean = true,
-    var direction: Float = 0f, // направление движения в радианах
-    var movementPhase: Float = 0f // фаза для периодического движения
-)
-
-// Enum для типов жуков
-enum class BugType(val imageRes: Int, val basePoints: Int, val speed: Float) {
-    SPIDER(R.drawable.spider, 20, 3f),
-    COCKROACH(R.drawable.cockroach, 35, 2f),
-    RHINOCEROS(R.drawable.rhinoceros, 35, 0.3f)
-}
-
-// Основной класс Bug
-abstract class Bug(
-    val type: BugType,
-    var state: BugState = BugState()
-) {
-    abstract fun move(screenWidth: Float, screenHeight: Float): BugState
-    abstract fun onDamage(): BugState
-    abstract fun getReward(): Int
-
-    // TODO дописать логику штрафов за промахи
-
-    fun isAlive(): Boolean = state.isAlive
-    fun getPosition(): Pair<Float, Float> = state.position
-    fun setRandomPosition(maxX: Int, maxY: Int) {
-        state = state.copy(
-            position = Pair(
-                (80 until maxX - 80).random().toFloat(),
-                (80 until maxY - 80).random().toFloat()
-            ),
-            direction = (0 until 360).random().toFloat() * (Math.PI.toFloat() / 180f), // случайное направление
-            movementPhase = (0 until 100).random().toFloat() // случайная фаза
-        )
-    }
-
-    @Composable
-    fun getImage(): Painter = painterResource(type.imageRes)
-
-    // Общая функция для проверки столкновений с границами
-    protected fun checkBoundaries(newX: Float, newY: Float, screenWidth: Float, screenHeight: Float): Pair<Float, Float> {
-        var x = newX
-        var y = newY
-        val bugSize = 80f
-
-        // Отражение от границ с учетом размера жука (80dp)
-        if (x < bugSize/2) {
-            x = bugSize/2
-            state.direction = Math.PI.toFloat() - state.direction
-        } else if (x > screenWidth - bugSize/2) {
-            x = screenWidth - bugSize/2
-            state.direction = Math.PI.toFloat() - state.direction
-        }
-
-        if (y < bugSize/2) {
-            y = bugSize/2
-            state.direction = -state.direction
-        } else if (y > screenHeight - bugSize/2) {
-            y = screenHeight - bugSize/2
-            state.direction = -state.direction
-        }
-
-        return Pair(x, y)
-    }
-}
-
-// Конкретные классы
-class SpiderBug : Bug(BugType.SPIDER) {
-    // Паук двигается прямолинейно с случайными изменениями направления
-    override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        if (Math.random() < 0.02) { // 2% шанс изменить направление
-            state.direction += (Math.random() - 0.5).toFloat() * 0.5f
-        }
-
-        val newX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed
-        val newY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed
-
-        // Проверяем границы
-        val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
-
-        state = state.copy(
-            position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.1f
-        )
-        return state
-    }
-    override fun onDamage(): BugState {
-        state = state.copy(isAlive = false)
-        return state
-    }
-    override fun getReward(): Int = type.basePoints
-}
-
-class CockroachBug : Bug(BugType.COCKROACH) {
-    // Таракан двигается по синусоиде
-    override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        state.movementPhase += 0.1f
-
-        val baseX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed
-        val baseY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed
-        val waveOffset = sin(state.movementPhase.toDouble()).toFloat() * 20f
-
-        val newX = baseX + cos(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
-        val newY = baseY + sin(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
-
-        // Проверяем границы
-        val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
-
-        state = state.copy(
-            position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.1f
-        )
-        return state
-    }
-    override fun onDamage(): BugState {
-        state = if (state.health > 1) {
-            state.copy(health = state.health - 1)
-        } else {
-            state.copy(isAlive = false)
-        }
-        return state
-    }
-    override fun getReward(): Int = type.basePoints
-}
-
-class RhinocerosBug : Bug(BugType.RHINOCEROS) {
-    // Носорог двигается по круговой траектории
-    override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        state.movementPhase += 0.05f
-
-        val circleRadius = 50f
-        val centerX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed * 0.5f
-        val centerY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed * 0.5f
-
-        val newX = centerX + cos(state.movementPhase.toDouble()).toFloat() * circleRadius
-        val newY = centerY + sin(state.movementPhase.toDouble()).toFloat() * circleRadius
-
-        // Периодически меняем основное направление
-        if (Math.random() < 0.01) {
-            state.direction = (Math.random() * Math.PI * 2).toFloat()
-        }
-
-        // Проверяем границы
-        val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
-
-        state = state.copy(
-            position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.05f
-        )
-        return state
-    }
-    override fun onDamage(): BugState {
-        state = state.copy(isAlive = false)
-        return state
-    }
-    override fun getReward(): Int = type.basePoints
-}
-
-// Фабрика для создания жуков
-object BugFactory {
-    fun createSpiderBug(): Bug = SpiderBug()
-    fun createCockroachBug(): Bug = CockroachBug()
-    fun createRhinocerosBug(): Bug = RhinocerosBug()
-
-    fun createRandomBug(): Bug {
-        return when ((1..3).random()) {
-            1 -> createSpiderBug()
-            2 -> createCockroachBug()
-            else -> createRhinocerosBug()
-        }
-    }
-}
+import kotlin.math.max
 
 @Composable
 fun BugItem(
@@ -283,7 +107,11 @@ fun BugItem(
 // TODO использовать настройки из главного меню
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
-fun GameHandler(navController: NavHostController) {
+fun GameHandler(
+    navController: NavHostController,
+    settings: Settings,  // Принимаем настройки
+    player: Player       // Принимаем игрока
+) {
     val configuration = LocalConfiguration.current
     var totalScore by remember { mutableIntStateOf(0) }
     var gameState by remember { mutableStateOf("playing") } // playing, paused, gameOver
@@ -294,8 +122,10 @@ fun GameHandler(navController: NavHostController) {
     val screenWidth = screenSize.first
     val screenHeight = screenSize.second
 
+    val penalty = 2
+
     fun createInitialBugs(): List<Bug> {
-        return List(5) {
+        return List(10) {
             val bug = BugFactory.createRandomBug()
             bug.setRandomPosition(
                 configuration.screenWidthDp - 80,
@@ -318,9 +148,17 @@ fun GameHandler(navController: NavHostController) {
         bugs = createInitialBugs()
     }
 
+    fun handleMiss() {
+        totalScore = max(0, totalScore - penalty)
+    }
+
+    fun handleHit(reward: Int) {
+        totalScore += reward
+    }
+
     @Composable
     fun onPaused() {
-        // TODO вылетает
+        // TODO переделать
         // Добавляем небольшую задержку для стабильности навигации
         LaunchedEffect(Unit) {
             delay(100)
@@ -332,17 +170,37 @@ fun GameHandler(navController: NavHostController) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                // Обработка клика по пустому месту (промах)
+                if (gameState == "playing") {
+                    handleMiss()
+                }
+            }
     ) {
         println("Сессия: $gameSessionKey | Жуков: ${bugs.size}")
+
+        Image(
+            painter = painterResource(R.drawable.lawn2), // ваша картинка фона
+            contentDescription = "Фон игры",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop // или FillBounds, FillWidth, etc.
+        )
 
         // Интерфейс игры
         Text(
             text = "Счет: $totalScore",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(30.dp),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground
+                .padding(30.dp)
+                .background(
+                    MaterialTheme.colorScheme.secondary,
+                    MaterialTheme.shapes.small
+                ),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onPrimary
         )
 
         // Управление игрой
@@ -366,7 +224,7 @@ fun GameHandler(navController: NavHostController) {
                 .padding(16.dp)
                 .clickable { restartGame() }
                 .background(
-                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.secondary,
                     MaterialTheme.shapes.small
                 )
                 .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -382,7 +240,7 @@ fun GameHandler(navController: NavHostController) {
                         BugItem(
                             bug = bug,
                             onBugSquashed = { reward ->
-                                totalScore += reward
+                                handleHit(reward)
                             },
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
@@ -412,7 +270,28 @@ fun GameHandlerPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             val mockNavController = rememberNavController()
-            GameHandler(navController = mockNavController)
+
+            val mockSettings = Settings(
+                gameSpeed = 1.0f,
+                maxBeetles = 5,
+                bonusInterval = 15,
+                roundDuration = 60
+            )
+
+            val mockPlayer = Player(
+                name = "Тестовый Игрок",
+                gender = "Муж",
+                course = "3 курс",
+                difficulty = 3,
+                birthDate = System.currentTimeMillis(),
+                zodiac = "Овен"
+            )
+
+            GameHandler(
+                navController = mockNavController,
+                settings = mockSettings,
+                player = mockPlayer
+            )
         }
     }
 }

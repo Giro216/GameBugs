@@ -1,30 +1,55 @@
 package com.example.gamebugs.ui.config
 
 import MainMenuPanel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.ui.components.GameHandler
-import com.example.gamebugs.ui.components.SettingsPanel
+import com.example.gamebugs.ui.components.Player
+import com.example.gamebugs.ui.components.Settings
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    var player by remember { mutableStateOf<Player?>(null) }
+    var settings by remember { mutableStateOf<Settings?>(null) }
 
     NavHost(
         navController = navController,
         startDestination = Screens.MainMenu.route
     ) {
         composable(Screens.MainMenu.route) {
-            MainMenuPanel(navController = navController)
+            MainMenuPanel(
+                navController = navController,
+                player = player,
+                settings = settings,
+                onPlayerUpdated = { newPlayer -> player = newPlayer },
+                onSettingsUpdated = { newSettings -> settings = newSettings }
+            )
         }
+
         composable(Screens.Game.route) {
-            GameHandler(navController = navController)
+            // Передаем настройки в GameHandler только если они есть
+            if (settings != null && player != null) {
+                GameHandler(
+                    navController = navController,
+                    settings = settings!!, // !! безопасно, т.к. проверили выше
+                    player = player!!
+                )
+            }
         }
-//        composable(Screens.Settings.route) {
-//            SettingsPanel(navController = navController)
-//        }
+
+        // composable(Screens.Settings.route) { ... }
     }
 }
 
