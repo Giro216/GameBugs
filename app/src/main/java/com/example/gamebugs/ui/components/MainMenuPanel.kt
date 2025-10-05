@@ -32,9 +32,8 @@ import com.example.gamebugs.ui.config.Screens
 fun MainMenuPanel(
     navController: NavHostController,
     player: Player?,
-    settings: Settings?,
+    settings: Settings,
     onPlayerUpdated: (Player?) -> Unit,
-    onSettingsUpdated: (Settings?) -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Регистрация", "Правила", "Список авторов", "Настройки")
@@ -73,11 +72,11 @@ fun MainMenuPanel(
             ) {
                 Button(
                     onClick = {
-                        if (player != null && settings != null) {
+                        if (player != null) {
                             navController.navigate(Screens.Game.route)
                         }
                     },
-                    enabled = player != null && settings != null
+                    enabled = player != null
                 ) {
                     Text(
                         text = "Новая игра",
@@ -108,22 +107,33 @@ fun MainMenuPanel(
                     .padding(10.dp)
             ) {
                 when (selectedTab) {
-                    0 -> RegistrationPanel(
-                        onRegisteredPlayer = { registeredPlayer ->
-                            onPlayerUpdated(registeredPlayer)
-                            isRegistered = true
-                        }
-                    )
+                    0 -> {
+                        RegistrationPanel(
+                            onRegisteredPlayer = { registeredPlayer ->
+                                onPlayerUpdated(registeredPlayer)
+                                isRegistered = true
+                            }
+                        )
+                        if (player != null) settings.gameDifficult = player.difficulty
+                    }
                     1 -> RulesPanel()
                     2 -> AuthorsPanel()
                     3 -> SettingsPanel(
                         settings,
                         onSavedSettings = { savedSettings ->
-                            onSettingsUpdated(savedSettings)
+                            settings.copy(savedSettings)
                         }
                     )
                 }
             }
         }
     }
+}
+
+private fun Settings.copy(newSettings: Settings) {
+    this.gameDifficult = newSettings.gameDifficult
+    this.gameSpeed = newSettings.gameSpeed
+    this.roundDuration = newSettings.roundDuration
+    this.bonusInterval = newSettings.bonusInterval
+    this.maxBeetles = newSettings.maxBeetles
 }

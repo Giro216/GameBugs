@@ -17,7 +17,7 @@ import com.example.gamebugs.ui.components.Settings
 fun AppNavigation() {
     val navController = rememberNavController()
     var player by remember { mutableStateOf<Player?>(null) }
-    var settings by remember { mutableStateOf<Settings?>(null) }
+    var settings by remember { mutableStateOf(Settings()) }
 
     NavHost(
         navController = navController,
@@ -29,15 +29,14 @@ fun AppNavigation() {
                 player = player,
                 settings = settings,
                 onPlayerUpdated = { newPlayer -> player = newPlayer },
-                onSettingsUpdated = { newSettings -> settings = newSettings }
             )
         }
 
         composable(Screens.Game.route) {
-            if (settings != null && player != null) {
+            if (player != null) {
                 GameHandler(
                     navController = navController,
-                    settings = settings!!,
+                    settings = settings,
                     player = player!!
                 )
             }
@@ -49,5 +48,4 @@ fun AppNavigation() {
 sealed class Screens(val route: String) {
     object MainMenu : Screens("main_menu")
     object Game : Screens("game_screen")
-    object Settings : Screens("settings")
 }

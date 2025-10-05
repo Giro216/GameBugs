@@ -28,30 +28,22 @@ import com.example.gamebugs.ui.theme.GameBugsTheme
 
 data class Settings(
     var gameDifficult: Int = 3,
-    var gameSpeed: Float,
-    var maxBeetles: Int,
-    var bonusInterval: Int,
-    var roundDuration: Int
+    var gameSpeed: Float = 1.0f,
+    var maxBeetles: Int = 10,
+    var bonusInterval: Int = 15,
+    var roundDuration: Int = 60
 )
 
 @Composable
 fun SettingsPanel(
-    usefulSettings: Settings? = null,
+    usefulSettings: Settings,
     onSavedSettings: (Settings) -> Unit = {}
 ) {
 
-    var gameSpeed by remember { mutableStateOf("1.0") }
-    var maxBeetles by remember { mutableStateOf("10") }
-    var bonusInterval by remember { mutableStateOf("15") }
-    var roundDuration by remember { mutableStateOf("60") }
-
-    if (usefulSettings != null){
-        gameSpeed = usefulSettings.gameSpeed.toString()
-        maxBeetles = usefulSettings.maxBeetles.toString()
-        bonusInterval = usefulSettings.bonusInterval.toString()
-        roundDuration = usefulSettings.roundDuration.toString()
-    }
-
+    var gameSpeed by remember { mutableStateOf(usefulSettings.gameSpeed.toString()) }
+    var maxBeetles by remember { mutableStateOf(usefulSettings.maxBeetles.toString()) }
+    var bonusInterval by remember { mutableStateOf(usefulSettings.bonusInterval.toString()) }
+    var roundDuration by remember { mutableStateOf(usefulSettings.roundDuration.toString()) }
 
     val scrollState = rememberScrollState()
 
@@ -70,7 +62,7 @@ fun SettingsPanel(
 
         SettingItem(
             title = "Скорость игры",
-            description = "Коэффициент скорости движения тараканов (1.0 - нормальная, 2.0 - в 2 раза быстрее)",
+            description = "Коэффициент скорости движения тараканов (0 - 3)",
             value = gameSpeed,
             onValueChange = { gameSpeed = it },
             keyboardType = KeyboardType.Decimal
@@ -102,16 +94,19 @@ fun SettingsPanel(
 
         Button(
             onClick = {
-                if (gameSpeed.isNotBlank() && maxBeetles.isNotBlank() && bonusInterval.isNotBlank() && roundDuration.isNotBlank()) {
-                    val settings = Settings(
-                        gameSpeed = gameSpeed.toFloat(),
-                        maxBeetles = maxBeetles.toInt(),
-                        bonusInterval = bonusInterval.toInt(),
-                        roundDuration = roundDuration.toInt()
-                    )
-                    onSavedSettings(settings)
-                }
+                val settings = Settings(
+                    gameSpeed = gameSpeed.toFloat(),
+                    maxBeetles = maxBeetles.toInt(),
+                    bonusInterval = bonusInterval.toInt(),
+                    roundDuration = roundDuration.toInt()
+                )
+                onSavedSettings(settings)
             },
+            enabled =
+                ((gameSpeed.isNotBlank() && gameSpeed.toFloat() > 0 && gameSpeed.toFloat() < 3)
+                    && maxBeetles.isNotBlank()
+                    && bonusInterval.isNotBlank()
+                    && roundDuration.isNotBlank()),
             modifier = Modifier
                 .fillMaxWidth()
         ) {
@@ -177,7 +172,8 @@ fun PreviewSettingsPanel(){
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            SettingsPanel()
+            val settings = Settings()
+            SettingsPanel(settings)
         }
     }
 }
