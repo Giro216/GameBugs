@@ -1,7 +1,9 @@
 package com.example.gamebugs.ui.config
 
 import MainMenuPanel
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,6 +20,19 @@ fun AppNavigation() {
     val navController = rememberNavController()
     var player by remember { mutableStateOf<Player?>(null) }
     var settings by remember { mutableStateOf(Settings()) }
+
+    BackHandler(enabled = true) {
+        when (navController.currentDestination?.route) {
+            Screens.Game.route -> {
+                return@BackHandler
+            }
+            else -> {
+                if (!navController.popBackStack()) {
+
+                }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -39,6 +54,10 @@ fun AppNavigation() {
                     settings = settings,
                     player = player!!
                 )
+            }else {
+                LaunchedEffect(Unit) {
+                    navController.popBackStack()
+                }
             }
         }
     }

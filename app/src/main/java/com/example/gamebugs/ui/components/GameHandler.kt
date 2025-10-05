@@ -1,17 +1,21 @@
 package com.example.gamebugs.ui.components
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -137,6 +141,14 @@ fun GameHandler(
         })
     }
 
+    BackHandler(enabled = gameState == "playing") {
+        gameState = "paused"
+    }
+
+    BackHandler(enabled = gameState == "paused") {
+        gameState = "playing"
+    }
+
     fun createInitialBugs(): List<Bug> {
         return List(settings.maxBeetles) {
             val bug = BugFactory.createRandomBug(settings.gameSpeed)
@@ -181,17 +193,6 @@ fun GameHandler(
         }
     }
 
-    fun spawnNewBug() {
-        if (bugs.size < settings.maxBeetles) {
-            val newBug = BugFactory.createRandomBug(settings.gameSpeed)
-            newBug.setRandomPosition(
-                configuration.screenWidthDp - 80,
-                configuration.screenHeightDp - 80
-            )
-            bugs = bugs + newBug
-        }
-    }
-
     fun restartGame() {
         totalScore = 0
         gameSessionKey++
@@ -211,9 +212,60 @@ fun GameHandler(
 
     @Composable
     fun onPaused() {
-        LaunchedEffect(Unit) {
-            delay(100)
-            navController.navigate(Screens.MainMenu.route)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = player.name,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+
+                Text(
+                    text = "ПАУЗА",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+
+                Text(
+                    text = "Счет: $totalScore",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+
+                Text(
+                    text = "Время: ${roundTimeLeft}с",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+
+                Button(
+                    onClick = { gameState = "playing" }
+                ) {
+                    Text("Продолжить")
+                }
+
+                Button(
+                    onClick = { restartGame() }
+                ){
+                    Text("Новая игра")
+                }
+
+                Button(
+                    onClick = {
+                        navController.popBackStack(Screens.MainMenu.route, false)
+                    }
+                ) {
+                    Text("В главное меню")
+                }
+            }
         }
     }
 
@@ -221,7 +273,7 @@ fun GameHandler(
     fun onGameOver() {
         LaunchedEffect(Unit) {
             delay(3000)
-            navController.navigate(Screens.MainMenu.route)
+            navController.popBackStack(Screens.MainMenu.route, inclusive = false)
         }
 
         Box(
@@ -260,59 +312,52 @@ fun GameHandler(
             contentScale = ContentScale.Crop
         )
 
-        Text(
-            text = "Время: ${roundTimeLeft}с",
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(vertical = 30.dp)
-                .background(
-                    MaterialTheme.colorScheme.secondary,
-                    MaterialTheme.shapes.small
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
+        if (gameState == "playing") {
+            Text(
+                text = "Время: ${roundTimeLeft}с",
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(vertical = 30.dp)
+                    .background(
+                        MaterialTheme.colorScheme.secondary,
+                        MaterialTheme.shapes.small
+                    )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
 
-        Text(
-            text = "Счет: $totalScore",
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(30.dp)
-                .background(
-                    MaterialTheme.colorScheme.primary,
-                    MaterialTheme.shapes.small
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
+            Text(
+                text = "Счет: $totalScore",
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(30.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.shapes.small
+                    )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
 
         Image(
-            painter = painterResource(android.R.drawable.ic_media_pause),
-            contentDescription = "Pause",
+            painter = painterResource(
+                if (gameState == "paused") android.R.drawable.ic_media_play
+                else android.R.drawable.ic_media_pause
+            ),
+            contentDescription = if (gameState == "paused") "Continue" else "Pause",
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(vertical = 30.dp, horizontal = 10.dp)
                 .size(60.dp)
                 .clickable {
-                    gameState = "paused"
+                    when (gameState) {
+                        "playing" -> gameState = "paused"
+                        "paused" -> gameState = "playing"
+                    }
                 }
-        )
-
-        Text(
-            text = "Новая игра",
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp)
-                .clickable { restartGame() }
-                .background(
-                    MaterialTheme.colorScheme.secondary,
-                    MaterialTheme.shapes.small
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onPrimary
         )
 
         // Основная логика автомата
@@ -322,9 +367,7 @@ fun GameHandler(
                     key("bug_${gameSessionKey}_$index") {
                         BugItem(
                             bug = bug,
-                            onBugSquashed = { reward ->
-                                handleHit(reward)
-                            },
+                            onBugSquashed = { reward -> handleHit(reward) },
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
                             gameSpeed = settings.gameSpeed,
