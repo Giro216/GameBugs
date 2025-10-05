@@ -1,16 +1,33 @@
 package com.example.gamebugs.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gamebugs.ui.theme.GameBugsTheme
 
 data class Settings(
+    var gameDifficult: Int = 3,
     var gameSpeed: Float,
     var maxBeetles: Int,
     var bonusInterval: Int,
@@ -19,13 +36,21 @@ data class Settings(
 
 @Composable
 fun SettingsPanel(
-    onSavedSettings: (Settings) -> Unit = {} // Callback
+    usefulSettings: Settings? = null,
+    onSavedSettings: (Settings) -> Unit = {}
 ) {
-    // Состояния для хранения значений настроек
+
     var gameSpeed by remember { mutableStateOf("1.0") }
     var maxBeetles by remember { mutableStateOf("10") }
     var bonusInterval by remember { mutableStateOf("15") }
     var roundDuration by remember { mutableStateOf("60") }
+
+    if (usefulSettings != null){
+        gameSpeed = usefulSettings.gameSpeed.toString()
+        maxBeetles = usefulSettings.maxBeetles.toString()
+        bonusInterval = usefulSettings.bonusInterval.toString()
+        roundDuration = usefulSettings.roundDuration.toString()
+    }
 
 
     val scrollState = rememberScrollState()
@@ -40,12 +65,12 @@ fun SettingsPanel(
         Text(
             text = "Настройки игры",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            textAlign = TextAlign.Center
         )
 
         SettingItem(
             title = "Скорость игры",
-            description = "Коэффициент скорости движения тараканов (например: 1.0 - нормальная, 2.0 - в 2 раза быстрее)",
+            description = "Коэффициент скорости движения тараканов (1.0 - нормальная, 2.0 - в 2 раза быстрее)",
             value = gameSpeed,
             onValueChange = { gameSpeed = it },
             keyboardType = KeyboardType.Decimal
@@ -79,19 +104,22 @@ fun SettingsPanel(
             onClick = {
                 if (gameSpeed.isNotBlank() && maxBeetles.isNotBlank() && bonusInterval.isNotBlank() && roundDuration.isNotBlank()) {
                     val settings = Settings(
-                        gameSpeed.toFloat(),
-                        maxBeetles.toInt(),
-                        bonusInterval.toInt(),
-                        roundDuration.toInt()
+                        gameSpeed = gameSpeed.toFloat(),
+                        maxBeetles = maxBeetles.toInt(),
+                        bonusInterval = bonusInterval.toInt(),
+                        roundDuration = roundDuration.toInt()
                     )
                     onSavedSettings(settings)
                 }
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
         ) {
-            Text("Сохранить настройки")
+            Text(
+                text = "Сохранить настройки",
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
 }
@@ -110,10 +138,12 @@ fun SettingItem(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = title,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -135,6 +165,19 @@ fun SettingItem(
                     Text("Введите значение")
                 }
             )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewSettingsPanel(){
+    GameBugsTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            SettingsPanel()
         }
     }
 }

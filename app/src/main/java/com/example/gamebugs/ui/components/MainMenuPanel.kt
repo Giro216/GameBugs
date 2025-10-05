@@ -117,6 +117,7 @@ fun MainMenuPanel(
                     1 -> RulesPanel()
                     2 -> AuthorsPanel()
                     3 -> SettingsPanel(
+                        settings,
                         onSavedSettings = { savedSettings ->
                             onSettingsUpdated(savedSettings)
                         }
