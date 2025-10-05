@@ -5,7 +5,11 @@ object BugFactory {
     fun createCockroachBug(): Bug = CockroachBug()
     fun createRhinocerosBug(): Bug = RhinocerosBug()
 
-    fun createRandomBug(): Bug {
+    fun createRandomBug(gameSpeed: Float): Bug {
+        for (it in BugType.entries){
+            it.speed *= gameSpeed
+        }
+
         return when ((1..3).random()) {
             1 -> createSpiderBug()
             2 -> createCockroachBug()

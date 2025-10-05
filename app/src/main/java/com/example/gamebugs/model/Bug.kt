@@ -16,10 +16,10 @@ data class BugState(
     var movementPhase: Float = 0f
 )
 
-enum class BugType(val imageRes: Int, val basePoints: Int, val speed: Float) {
+enum class BugType(val imageRes: Int, val basePoints: Int, var speed: Float) {
     SPIDER(R.drawable.spider, 20, 3f),
     COCKROACH(R.drawable.cockroach, 35, 2f),
-    RHINOCEROS(R.drawable.rhinoceros, 35, 0.0002f)
+    RHINOCEROS(R.drawable.rhinoceros, 35, 0.00002f)
 }
 
 abstract class Bug(
@@ -51,7 +51,7 @@ abstract class Bug(
         var y = newY
         val bugSize = 80f
 
-        // Отражение от границ с учетом размера жука (80dp)
+        // Отражение от границ
         if (x < bugSize/2) {
             x = bugSize/2
             state.direction = Math.PI.toFloat() - state.direction
@@ -73,7 +73,7 @@ abstract class Bug(
 }
 
 class SpiderBug : Bug(BugType.SPIDER) {
-    // Паук двигается прямолинейно с случайными изменениями направления
+    // Паук двигается прямолинейно
     override fun move(screenWidth: Float, screenHeight: Float): BugState {
         if (Math.random() < 0.02) {
             state.direction += (Math.random() - 0.5).toFloat() * 0.5f

@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -76,7 +77,7 @@ fun BugItem(
 
     val scale by animateFloatAsState(
         targetValue = if (isAlive) 1f else 0f,
-        animationSpec = tween(durationMillis = 300)
+        animationSpec = tween(durationMillis = 100)
     )
 
     if (scale > 0.01f) {
@@ -115,18 +116,30 @@ fun GameHandler(
     var gameSessionKey by remember { mutableIntStateOf(0) }
     var gameTime by remember { mutableIntStateOf(0) }
     var roundTimeLeft by remember { mutableIntStateOf(settings.roundDuration) }
+    var lastUpdateTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     var screenSize by remember { mutableStateOf(Pair(configuration.screenWidthDp.toFloat(), configuration.screenHeightDp.toFloat())) }
     val screenWidth = screenSize.first
     val screenHeight = screenSize.second
 
-    val penalty = 2
     val bonusInterval = settings.bonusInterval
     val roundDuration = settings.roundDuration
 
+    var penalty by remember {
+        mutableIntStateOf(
+        when (settings.gameDifficult){
+            1 -> 2
+            2 -> 4
+            3 -> 10
+            4 -> 15
+            5 -> 30
+            else -> 1
+        })
+    }
+
     fun createInitialBugs(): List<Bug> {
         return List(settings.maxBeetles) {
-            val bug = BugFactory.createRandomBug()
+            val bug = BugFactory.createRandomBug(settings.gameSpeed)
             bug.setRandomPosition(
                 configuration.screenWidthDp - 80,
                 configuration.screenHeightDp - 80
@@ -141,26 +154,36 @@ fun GameHandler(
 
     LaunchedEffect(gameState, gameSessionKey) {
         if (gameState == "playing") {
-            while (gameTime < roundDuration && gameState == "playing") {
-                delay(1000)
-                gameTime++
-                roundTimeLeft = roundDuration - gameTime
+            lastUpdateTime = System.currentTimeMillis()
 
-                if (gameTime % bonusInterval == 0 && gameTime > 0) {
-                    spawnBonusBug()
+            while (gameState == "playing") {
+                val currentTime = System.currentTimeMillis()
+                val elapsedSeconds = (currentTime - lastUpdateTime) / 1000
+
+                if (elapsedSeconds >= 1) {
+                    gameTime++
+                    roundTimeLeft = roundDuration - gameTime
+                    lastUpdateTime = currentTime
+
+//                    if (gameTime % bonusInterval == 0 && gameTime > 0) {
+//                        spawnBonusBug()
+//                    }
+
+                    val allBugsDead = bugs.all { !it.isAlive() }
+                    if (gameTime >= roundDuration || allBugsDead) {
+                        gameState = "gameOver"
+                        break
+                    }
                 }
 
-                val allBugsDead = bugs.all {!it.isAlive()}
-                if (gameTime >= roundDuration || allBugsDead) {
-                    gameState = "gameOver"
-                }
+                delay(16)
             }
         }
     }
 
     fun spawnNewBug() {
         if (bugs.size < settings.maxBeetles) {
-            val newBug = BugFactory.createRandomBug()
+            val newBug = BugFactory.createRandomBug(settings.gameSpeed)
             newBug.setRandomPosition(
                 configuration.screenWidthDp - 80,
                 configuration.screenHeightDp - 80
@@ -184,12 +207,6 @@ fun GameHandler(
 
     fun handleHit(reward: Int) {
         totalScore += reward
-//        LaunchedEffect(Unit) {
-//            delay(1000)
-//            if (gameState == "playing") {
-//                spawnNewBug()
-//            }
-//        }
     }
 
     @Composable
