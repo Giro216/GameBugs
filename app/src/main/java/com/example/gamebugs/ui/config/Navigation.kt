@@ -8,28 +8,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.gamebugs.dataBase.model.GameViewModel
 import com.example.gamebugs.ui.components.GameHandler
 import com.example.gamebugs.ui.components.Player
 import com.example.gamebugs.ui.components.Settings
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(gameViewModel: GameViewModel) {
     val navController = rememberNavController()
     var player by remember { mutableStateOf<Player?>(null) }
     var settings by remember { mutableStateOf(Settings()) }
+
 
     BackHandler(enabled = true) {
         when (navController.currentDestination?.route) {
             Screens.Game.route -> {
                 return@BackHandler
-            }
-            else -> {
-                if (!navController.popBackStack()) {
-
-                }
             }
         }
     }
@@ -41,6 +39,7 @@ fun AppNavigation() {
         composable(Screens.MainMenu.route) {
             MainMenuPanel(
                 navController = navController,
+                gameViewModel = gameViewModel,
                 player = player,
                 settings = settings,
                 onPlayerUpdated = { newPlayer -> player = newPlayer },
@@ -51,6 +50,7 @@ fun AppNavigation() {
             if (player != null) {
                 GameHandler(
                     navController = navController,
+                    gameViewModel = gameViewModel,
                     settings = settings,
                     player = player!!
                 )
@@ -63,7 +63,6 @@ fun AppNavigation() {
     }
 }
 
-// Определение экранов
 sealed class Screens(val route: String) {
     object MainMenu : Screens("main_menu")
     object Game : Screens("game_screen")

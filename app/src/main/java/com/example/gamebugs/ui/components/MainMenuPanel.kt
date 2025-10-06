@@ -20,8 +20,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gamebugs.R
+import com.example.gamebugs.dataBase.model.GameViewModel
 import com.example.gamebugs.ui.components.AuthorsPanel
 import com.example.gamebugs.ui.components.Player
+import com.example.gamebugs.ui.components.RecordsPanel
 import com.example.gamebugs.ui.components.RegistrationPanel
 import com.example.gamebugs.ui.components.RulesPanel
 import com.example.gamebugs.ui.components.Settings
@@ -34,9 +36,10 @@ fun MainMenuPanel(
     player: Player?,
     settings: Settings,
     onPlayerUpdated: (Player?) -> Unit,
+    gameViewModel: GameViewModel,
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Регистрация", "Правила", "Список авторов", "Настройки")
+    val tabs = listOf("Регистрация", "Правила", "Рекорды", "Список авторов", "Настройки")
     var isRegistered by remember { mutableStateOf(player != null) }
 
     Column(
@@ -117,8 +120,9 @@ fun MainMenuPanel(
                         if (player != null) settings.gameDifficult = player.difficulty
                     }
                     1 -> RulesPanel()
-                    2 -> AuthorsPanel()
-                    3 -> SettingsPanel(
+                    2 -> RecordsPanel(gameViewModel)
+                    3 -> AuthorsPanel()
+                    4 -> SettingsPanel(
                         settings,
                         onSavedSettings = { savedSettings ->
                             settings.copy(savedSettings)

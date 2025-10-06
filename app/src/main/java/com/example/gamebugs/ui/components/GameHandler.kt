@@ -34,11 +34,18 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
+import com.example.gamebugs.dataBase.AppDatabase
+import com.example.gamebugs.dataBase.model.GameRecord
+import com.example.gamebugs.dataBase.model.GameViewModel
+import com.example.gamebugs.dataBase.repository.MockRecordsRepository
+import com.example.gamebugs.dataBase.repository.RecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
 import com.example.gamebugs.ui.config.Screens
@@ -112,7 +119,8 @@ fun BugItem(
 fun GameHandler(
     navController: NavHostController,
     settings: Settings,
-    player: Player
+    player: Player,
+    gameViewModel: GameViewModel
 ) {
     val configuration = LocalConfiguration.current
     var totalScore by remember { mutableIntStateOf(0) }
@@ -273,6 +281,11 @@ fun GameHandler(
     fun onGameOver() {
         LaunchedEffect(Unit) {
             delay(3000)
+            gameViewModel.saveRecord(GameRecord(
+                playerName = player.name,
+                score = totalScore,
+                difficulty = settings.gameDifficult,
+            ))
             navController.popBackStack(Screens.MainMenu.route, inclusive = false)
         }
 
@@ -286,7 +299,7 @@ fun GameHandler(
                 text = "Игра окончена!\nФинальный счет: $totalScore",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onError,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -390,6 +403,7 @@ private fun spawnBonusBug() {
     TODO("Not yet implemented")
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview
 @Composable
 fun GameHandlerPreview() {
@@ -416,11 +430,17 @@ fun GameHandlerPreview() {
                 zodiac = "Овен"
             )
 
+            val gameViewModel = GameViewModel(
+                repository = MockRecordsRepository()
+            )
+
             GameHandler(
                 navController = mockNavController,
                 settings = mockSettings,
-                player = mockPlayer
+                player = mockPlayer,
+                gameViewModel = gameViewModel
             )
         }
     }
 }
+
