@@ -37,15 +37,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
-import com.example.gamebugs.dataBase.AppDatabase
 import com.example.gamebugs.dataBase.model.GameRecord
 import com.example.gamebugs.dataBase.model.GameViewModel
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
-import com.example.gamebugs.dataBase.repository.RecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
 import com.example.gamebugs.ui.config.Screens

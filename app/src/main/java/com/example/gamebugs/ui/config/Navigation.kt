@@ -1,6 +1,5 @@
 package com.example.gamebugs.ui.config
 
-import MainMenuPanel
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -8,12 +7,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.dataBase.model.GameViewModel
 import com.example.gamebugs.ui.components.GameHandler
+import com.example.gamebugs.ui.components.MainMenuPanel
 import com.example.gamebugs.ui.components.Player
 import com.example.gamebugs.ui.components.Settings
 
