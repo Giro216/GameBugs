@@ -41,6 +41,13 @@ class GameViewModel(private val repository: IRecordsRepository) : ViewModel() {
         }
     }
 
+    fun resetRecords(){
+        viewModelScope.launch {
+            repository.resetAllRecords()
+            loadRecords()
+        }
+    }
+
 }
 
 class GameViewModelFactory(
