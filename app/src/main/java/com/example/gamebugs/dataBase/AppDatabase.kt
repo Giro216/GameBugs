@@ -4,16 +4,19 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.gamebugs.dataBase.dao.PlayerDao
 import com.example.gamebugs.dataBase.dao.RecordsDao
 import com.example.gamebugs.dataBase.model.GameRecord
+import com.example.gamebugs.dataBase.model.PlayerEntity
 
 @Database(
-    entities = [GameRecord::class],
-    version = 1,
+    entities = [GameRecord::class, PlayerEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun recordDao(): RecordsDao
+    abstract fun playerDao(): PlayerDao
 
     companion object {
         @Volatile
@@ -25,7 +28,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "game_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration(false)
+                    .build()
                 INSTANCE = instance
                 instance
             }

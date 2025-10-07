@@ -10,16 +10,17 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.gamebugs.dataBase.model.GameViewModel
+import com.example.gamebugs.dataBase.model.PlayerEntity
+import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
+import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
 import com.example.gamebugs.ui.components.GameHandler
 import com.example.gamebugs.ui.components.MainMenuPanel
-import com.example.gamebugs.ui.components.Player
 import com.example.gamebugs.ui.components.Settings
 
 @Composable
-fun AppNavigation(gameViewModel: GameViewModel) {
+fun AppNavigation(gameViewModel: GameViewModel, playerViewModel: PlayerViewModel) {
     val navController = rememberNavController()
-    var player by remember { mutableStateOf<Player?>(null) }
+    var playerEntity by remember { mutableStateOf<PlayerEntity?>(null) }
     var settings by remember { mutableStateOf(Settings()) }
 
 
@@ -39,19 +40,21 @@ fun AppNavigation(gameViewModel: GameViewModel) {
             MainMenuPanel(
                 navController = navController,
                 gameViewModel = gameViewModel,
-                player = player,
+                playerViewModel = playerViewModel,
+                player = playerEntity,
                 settings = settings,
-                onPlayerUpdated = { newPlayer -> player = newPlayer },
+                onPlayerUpdated = { newPlayer -> playerEntity = newPlayer },
             )
         }
 
         composable(Screens.Game.route) {
-            if (player != null) {
+            if (playerEntity != null) {
                 GameHandler(
                     navController = navController,
                     gameViewModel = gameViewModel,
+                    playerViewModel = playerViewModel,
                     settings = settings,
-                    player = player!!
+                    player = playerEntity!!
                 )
             }else {
                 LaunchedEffect(Unit) {

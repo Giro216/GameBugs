@@ -1,8 +1,9 @@
-package com.example.gamebugs.dataBase.model
+package com.example.gamebugs.dataBase.model.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.gamebugs.dataBase.model.GameRecord
 import com.example.gamebugs.dataBase.repository.IRecordsRepository
 import com.example.gamebugs.dataBase.repository.RecordsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,16 +49,4 @@ class GameViewModel(private val repository: IRecordsRepository) : ViewModel() {
         }
     }
 
-}
-
-class GameViewModelFactory(
-    private val repository: RecordsRepository
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(GameViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return GameViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
 }
