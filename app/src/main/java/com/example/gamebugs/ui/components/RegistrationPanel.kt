@@ -3,6 +3,7 @@ package com.example.gamebugs.ui.components
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,9 +12,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -23,8 +28,11 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,33 +44,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gamebugs.R
+import com.example.gamebugs.dataBase.model.PlayerEntity
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-data class Player(
-    val name: String,
-    val gender: String,
-    val course: String,
-    val difficulty: Int,
-    val birthDate: Long,
-    val zodiac: String
-)
-
 @SuppressLint("SimpleDateFormat")
 @Composable
 fun RegistrationPanel(
-    onRegisteredPlayer: (Player) -> Unit = {}
+    onRegisteredPlayer: (PlayerEntity) -> Unit = {},
+    existingPlayers: List<PlayerEntity> = emptyList(),
+    onPlayerSelected: (PlayerEntity) -> Unit = {}
 ) {
     var fullName by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
     var course by remember { mutableStateOf("") }
-    var difficulty by remember { mutableStateOf(1f) }
+    var difficulty by remember { mutableFloatStateOf(1f) }
     var expanded by remember { mutableStateOf(false) }
-    var birthDate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var birthDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var isRegistered by remember { mutableStateOf(false) }
+
+    var showExistingPlayers by remember { mutableStateOf(false) }
+    var selectedExistingPlayer by remember { mutableStateOf<PlayerEntity?>(null) }
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -78,23 +83,137 @@ fun RegistrationPanel(
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
+    @Composable
+    fun selectExistingPlayer() {
+        AlertDialog(
+            onDismissRequest = { showExistingPlayers = false },
+            title = { Text("Выберите игрока") },
+            text = {
+                Column {
+                    existingPlayers.forEach { player ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable {
+                                    selectedExistingPlayer = player
+                                    showExistingPlayers = false
+                                    onPlayerSelected(player)
+                                    fullName = player.name
+                                    gender = player.gender
+                                    course = player.course
+                                    difficulty = player.difficulty.toFloat()
+                                    birthDate = player.birthDate
+                                },
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = player.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text("Пол: ${player.gender}")
+                                Text("Курс: ${player.course}")
+                                Text("Сложность: ${player.difficulty}")
+                                Text("Знак зодиака: ${player.zodiac}")
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showExistingPlayers = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(10.dp),
+            .padding(horizontal = 10.dp, vertical = 5.dp),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
 
-        OutlinedTextField(
-            value = fullName,
-            onValueChange = { fullName = it },
-            label = { Text("Введите ФИО") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(alignment = Alignment.Start)
-                .padding(vertical = 5.dp)
-        )
+        if (existingPlayers.isNotEmpty()) {
+            OutlinedButton(
+                onClick = { showExistingPlayers = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Выбрать из существующих игроков")
+            }
+
+            if (showExistingPlayers) {
+                selectExistingPlayer()
+            }
+
+            Text(
+                "Или создайте нового игрока:",
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+
+        var showNameSuggestions by remember { mutableStateOf(false) }
+
+        Box {
+            OutlinedTextField(
+                value = fullName,
+                onValueChange = {
+                    fullName = it
+                    showNameSuggestions = it.isNotBlank()
+                },
+                label = { Text("Введите ФИО") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .padding(vertical = 5.dp)
+            )
+
+            if (showNameSuggestions && existingPlayers.isNotEmpty()) {
+                val suggestions = existingPlayers
+                    .map { it.name }
+                    .filter { it.contains(fullName, ignoreCase = true) }
+                    .take(3)
+
+                if (suggestions.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .offset(y = 60.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column {
+                            suggestions.forEach { suggestion ->
+                                Text(
+                                    text = suggestion,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            fullName = suggestion
+                                            showNameSuggestions = false
+
+                                            val player = existingPlayers.find { it.name == suggestion }
+                                            player?.let {
+                                                selectedExistingPlayer = it
+                                                gender = it.gender
+                                                course = it.course
+                                                difficulty = it.difficulty.toFloat()
+                                                birthDate = it.birthDate
+                                                onPlayerSelected(it)
+                                            }
+                                        }
+                                        .padding(16.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Text("Пол:",
             fontSize = 18.sp,
@@ -164,13 +283,13 @@ fun RegistrationPanel(
             onClick = {
                 if (fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()) {
                     val zodiac = getZodiac(birthDate)
-                    val player = Player(
-                        fullName,
-                        gender,
-                        course,
-                        difficulty.toInt(),
-                        birthDate,
-                        zodiac
+                    val player = PlayerEntity(
+                        name = fullName,
+                        gender = gender,
+                        course = course,
+                        difficulty = difficulty.toInt(),
+                        birthDate = birthDate,
+                        zodiac = zodiac
                     )
                     isRegistered = true
                     onRegisteredPlayer(player)
@@ -182,21 +301,29 @@ fun RegistrationPanel(
             Text("Зарегистрироваться")
         }
 
-        // Результат
-        if (isRegistered) {
+        if (isRegistered || selectedExistingPlayer != null) {
+            val displayPlayer = selectedExistingPlayer ?: PlayerEntity(
+                name = fullName,
+                gender = gender,
+                course = course,
+                difficulty = difficulty.toInt(),
+                birthDate = birthDate,
+                zodiac = getZodiac(birthDate)
+            )
+
             Text(
                 """
-                Имя: $fullName
-                Пол: $gender
-                Курс: $course
-                Сложность: ${difficulty.toInt()}
-                Дата рождения: ${SimpleDateFormat("dd.MM.yyyy").format(Date(birthDate))}
-                Знак зодиака: ${getZodiac(birthDate)}
+                Имя: ${displayPlayer.name}
+                Пол: ${displayPlayer.gender}
+                Курс: ${displayPlayer.course}
+                Сложность: ${displayPlayer.difficulty}
+                Дата рождения: ${SimpleDateFormat("dd.MM.yyyy").format(Date(displayPlayer.birthDate))}
+                Знак зодиака: ${displayPlayer.zodiac}
             """.trimIndent()
             )
 
             Image(
-                painterResource(id = getZodiacImage(getZodiac(birthDate))),
+                painterResource(id = getZodiacImage(displayPlayer.zodiac)),
                 contentDescription = null
             )
 

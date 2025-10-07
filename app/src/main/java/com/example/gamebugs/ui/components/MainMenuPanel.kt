@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -16,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -27,30 +30,40 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
-import com.example.gamebugs.dataBase.model.GameViewModel
+import com.example.gamebugs.dataBase.model.PlayerEntity
+import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
+import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
+import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
-import com.example.gamebugs.ui.config.AppNavigation
 import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 
 @Composable
 fun MainMenuPanel(
     navController: NavHostController,
-    player: Player?,
+    player: PlayerEntity?,
     settings: Settings,
-    onPlayerUpdated: (Player?) -> Unit,
+    onPlayerUpdated: (PlayerEntity?) -> Unit,
     gameViewModel: GameViewModel,
+    playerViewModel: PlayerViewModel,
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Регистрация", "Правила", "Рекорды", "Список авторов", "Настройки")
+    val existingPlayers by playerViewModel.players.collectAsState(emptyList())
     var isRegistered by remember { mutableStateOf(player != null) }
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(Unit) {
+        playerViewModel.loadPlayers()
+    }
 
     Column(
         verticalArrangement = Arrangement.Top,
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(horizontal = 7.dp)
             .verticalScroll(scrollState)
     ) {
@@ -78,7 +91,7 @@ fun MainMenuPanel(
             Column(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .padding(vertical = 20.dp)
+                    .padding(vertical = 10.dp)
             ) {
                 Button(
                     onClick = {
@@ -119,12 +132,19 @@ fun MainMenuPanel(
                 when (selectedTab) {
                     0 -> {
                         RegistrationPanel(
-                            onRegisteredPlayer = { registeredPlayer ->
-                                onPlayerUpdated(registeredPlayer)
+                            onRegisteredPlayer = { newPlayer ->
+                                playerViewModel.savePlayer(newPlayer)
+                                onPlayerUpdated(newPlayer)
                                 isRegistered = true
+                                settings.gameDifficult = newPlayer.difficulty
+                            },
+                            existingPlayers = existingPlayers,
+                            onPlayerSelected = { selectedPlayer ->
+                                onPlayerUpdated(selectedPlayer)
+                                isRegistered = true
+                                settings.gameDifficult = selectedPlayer.difficulty
                             }
                         )
-                        if (player != null) settings.gameDifficult = player.difficulty
                     }
                     1 -> RulesPanel()
                     2 -> RecordsPanel(gameViewModel)
@@ -158,11 +178,23 @@ fun PreviewMainMenuPanel(){
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ){
-            val gameViewModel = GameViewModel(
-                repository = MockRecordsRepository()
-            )
+            val gameViewModel = GameViewModel(MockRecordsRepository())
+            val playerViewModel = PlayerViewModel(MockPlayerRepository())
 
-            AppNavigation(gameViewModel = gameViewModel)
+            LaunchedEffect(Unit) {
+                playerViewModel.loadPlayers()
+            }
+
+            val navController = rememberNavController()
+
+            MainMenuPanel(
+                navController = navController,
+                player = null,
+                settings = Settings(),
+                onPlayerUpdated = {},
+                gameViewModel = gameViewModel,
+                playerViewModel = playerViewModel
+            )
         }
     }
 }

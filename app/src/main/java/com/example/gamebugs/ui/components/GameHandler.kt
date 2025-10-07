@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -41,7 +42,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
 import com.example.gamebugs.dataBase.model.GameRecord
-import com.example.gamebugs.dataBase.model.GameViewModel
+import com.example.gamebugs.dataBase.model.PlayerEntity
+import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
+import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
+import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
@@ -116,8 +120,9 @@ fun BugItem(
 fun GameHandler(
     navController: NavHostController,
     settings: Settings,
-    player: Player,
-    gameViewModel: GameViewModel
+    player: PlayerEntity,
+    gameViewModel: GameViewModel,
+    playerViewModel: PlayerViewModel
 ) {
     val configuration = LocalConfiguration.current
     var totalScore by remember { mutableIntStateOf(0) }
@@ -301,6 +306,7 @@ fun GameHandler(
         }
     }
 
+    // Основная разметка
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -327,7 +333,7 @@ fun GameHandler(
                 text = "Время: ${roundTimeLeft}с",
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(vertical = 30.dp)
+                    .statusBarsPadding()
                     .background(
                         MaterialTheme.colorScheme.secondary,
                         MaterialTheme.shapes.small
@@ -341,12 +347,11 @@ fun GameHandler(
                 text = "Счет: $totalScore",
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(30.dp)
+                    .statusBarsPadding()
                     .background(
                         MaterialTheme.colorScheme.primary,
                         MaterialTheme.shapes.small
-                    )
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    ),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onPrimary
             )
@@ -360,8 +365,9 @@ fun GameHandler(
             contentDescription = if (gameState == "paused") "Continue" else "Pause",
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(vertical = 30.dp, horizontal = 10.dp)
-                .size(60.dp)
+                .statusBarsPadding()
+                .padding(horizontal = 10.dp)
+                .size(50.dp)
                 .clickable {
                     when (gameState) {
                         "playing" -> gameState = "paused"
@@ -418,7 +424,7 @@ fun GameHandlerPreview() {
                 roundDuration = 120
             )
 
-            val mockPlayer = Player(
+            val mockPlayer = PlayerEntity(
                 name = "Тестовый Игрок",
                 gender = "Муж",
                 course = "3 курс",
@@ -431,11 +437,16 @@ fun GameHandlerPreview() {
                 repository = MockRecordsRepository()
             )
 
+            val playerViewModel = PlayerViewModel(
+                repository = MockPlayerRepository()
+            )
+
             GameHandler(
                 navController = mockNavController,
                 settings = mockSettings,
                 player = mockPlayer,
-                gameViewModel = gameViewModel
+                gameViewModel = gameViewModel,
+                playerViewModel = playerViewModel
             )
         }
     }

@@ -13,7 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.gamebugs.dataBase.model.GameViewModel
+import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
 import com.example.gamebugs.ui.theme.GameBugsTheme
 

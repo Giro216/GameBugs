@@ -1,11 +1,9 @@
 package com.example.gamebugs.dataBase.model.viewModel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.gamebugs.dataBase.model.GameRecord
 import com.example.gamebugs.dataBase.repository.IRecordsRepository
-import com.example.gamebugs.dataBase.repository.RecordsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
