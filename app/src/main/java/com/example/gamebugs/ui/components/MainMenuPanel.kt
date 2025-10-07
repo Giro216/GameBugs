@@ -53,7 +53,6 @@ fun MainMenuPanel(
     val tabs = listOf("Регистрация", "Правила", "Рекорды", "Список авторов", "Настройки")
     val existingPlayers by playerViewModel.players.collectAsState(emptyList())
     var isRegistered by remember { mutableStateOf(player != null) }
-    val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
         playerViewModel.loadPlayers()
@@ -65,7 +64,6 @@ fun MainMenuPanel(
             .fillMaxSize()
             .statusBarsPadding()
             .padding(horizontal = 7.dp)
-            .verticalScroll(scrollState)
     ) {
         Text(
             text = stringResource(R.string.app_name),
