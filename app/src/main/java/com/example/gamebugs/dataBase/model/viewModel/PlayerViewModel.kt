@@ -25,4 +25,19 @@ class PlayerViewModel(private val repository: IPlayerRepository) : ViewModel() {
             loadPlayers()
         }
     }
+
+    fun deletePlayer(player: PlayerEntity) {
+        viewModelScope.launch {
+            repository.deletePlayer(player)
+            loadPlayers()
+        }
+    }
+
+    fun isPlayerExistByName(name: String): Boolean{
+        var result = true
+        viewModelScope.launch {
+            result = repository.isPlayerExistByName(name)
+        }
+        return result
+    }
 }

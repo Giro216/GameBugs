@@ -20,6 +20,6 @@ interface PlayerDao {
     @Query("SELECT * FROM players WHERE name = :name")
     suspend fun getPlayerByName(name: String): PlayerEntity?
 
-    @Query("SELECT COUNT(*) FROM players WHERE name = :name AND gender = :gender AND course = :course AND difficulty = :difficulty AND birthDate = :birthDate")
-    suspend fun isPlayerExistsWithDetails(name: String, gender: String, course: String, difficulty: Int, birthDate: Long): Boolean
+    @Query("SELECT COUNT(*) FROM players WHERE name = :name")
+    suspend fun isPlayerExists(name: String): Boolean
 }

@@ -8,12 +8,13 @@ interface IPlayerRepository {
     suspend fun getAllPlayers(): List<PlayerEntity>
     suspend fun deletePlayer(player: PlayerEntity)
     suspend fun getPlayerByName(name: String): PlayerEntity?
+
+    suspend fun isPlayerExistByName(name: String) : Boolean
 }
 
 class PlayerRepository(private val playerDao: PlayerDao) : IPlayerRepository {
     override suspend fun savePlayer(player: PlayerEntity) {
-        println("Saving player: ${player.name}")
-        if (!playerDao.isPlayerExistsWithDetails(player.name, player.gender, player.course, player.difficulty, player.birthDate)){
+        if (!playerDao.isPlayerExists(player.name)) {
             playerDao.insertPlayer(player)
         }
     }
@@ -32,6 +33,12 @@ class PlayerRepository(private val playerDao: PlayerDao) : IPlayerRepository {
     override suspend fun getPlayerByName(name: String): PlayerEntity? {
         return playerDao.getPlayerByName(name)
     }
+
+    override suspend fun isPlayerExistByName(name: String): Boolean {
+        return playerDao.isPlayerExists(name)
+    }
+
+
 }
 
 class MockPlayerRepository : IPlayerRepository {
@@ -63,11 +70,15 @@ class MockPlayerRepository : IPlayerRepository {
         return mockPlayers.toList()
     }
 
-    override suspend fun deletePlayer(playerEntity: PlayerEntity) {
-        mockPlayers.removeAll { it.name == playerEntity.name }
+    override suspend fun deletePlayer(player: PlayerEntity) {
+        mockPlayers.removeAll { it.name == player.name }
     }
 
     override suspend fun getPlayerByName(name: String): PlayerEntity? {
         return mockPlayers.find { it.name == name }
+    }
+
+    override suspend fun isPlayerExistByName(name: String): Boolean {
+        return true
     }
 }

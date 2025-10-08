@@ -2,7 +2,6 @@ package com.example.gamebugs.ui.components
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,21 +12,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -35,7 +34,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,13 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gamebugs.R
 import com.example.gamebugs.dataBase.model.PlayerEntity
+import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
+import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -62,11 +61,13 @@ import java.util.Locale
 @SuppressLint("SimpleDateFormat")
 @Composable
 fun RegistrationPanel(
-    onRegisteredPlayer: (PlayerEntity) -> Unit = {},
+    onRegisteredPlayer: (PlayerEntity) -> Unit,
     existingPlayers: List<PlayerEntity> = emptyList(),
-    onPlayerSelected: (PlayerEntity) -> Unit = {}
+    onPlayerSelected: (PlayerEntity) -> Unit,
+    onDeletedPlayer: (PlayerEntity) -> Unit,
+    playerViewModel: PlayerViewModel
 ) {
-    var currentScreen by remember { mutableStateOf<RegistrationScreen>(RegistrationScreen.Start) }
+    var currentScreen by remember { mutableStateOf<RegistrationScreen>(RegistrationScreen.SelectExisting) }
     var selectedExistingPlayer by remember { mutableStateOf<PlayerEntity?>(null) }
 
     Column(
@@ -93,7 +94,8 @@ fun RegistrationPanel(
                         onPlayerSelected(player)
                         currentScreen = RegistrationScreen.Start
                     },
-                    onBack = { currentScreen = RegistrationScreen.Start }
+                    onBack = { currentScreen = RegistrationScreen.Start },
+                    onDeletedPlayer = onDeletedPlayer
                 )
             }
 
@@ -103,14 +105,17 @@ fun RegistrationPanel(
                         onRegisteredPlayer(player)
                         currentScreen = RegistrationScreen.Start
                     },
-                    onBack = { currentScreen = RegistrationScreen.Start }
+                    onBack = { currentScreen = RegistrationScreen.Start },
+                    playerViewModel = playerViewModel
                 )
             }
         }
 
         selectedExistingPlayer?.let { player ->
             Spacer(modifier = Modifier.height(16.dp))
-            PlayerInfoCard(player = player)
+            PlayerInfoCard(
+                player = player
+            )
         }
     }
 }
@@ -128,23 +133,30 @@ private fun StartScreen(
     ) {
         Text(
             "Выберите действие",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
         )
 
         if (existingPlayers.isNotEmpty()) {
             Button(
                 onClick = onSelectExisting,
-                modifier = Modifier.fillMaxWidth(0.8f)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Выбрать существующий профиль")
+                Text(
+                    text = "Выбрать существующий профиль",
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
         Button(
             onClick = onCreateNew,
-            modifier = Modifier.fillMaxWidth(0.8f)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Зарегистрироваться")
+            Text(
+                text = "Зарегистрироваться",
+                textAlign = TextAlign.Center
+            )
         }
 
         if (existingPlayers.isNotEmpty()) {
@@ -161,25 +173,22 @@ private fun StartScreen(
 private fun SelectExistingScreen(
     existingPlayers: List<PlayerEntity>,
     onPlayerSelected: (PlayerEntity) -> Unit,
+    onDeletedPlayer: (PlayerEntity) -> Unit,
     onBack: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 4.dp, vertical = 8.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            Button(
-                onClick = onBack,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = android.R.drawable.ic_media_previous),
-                    contentDescription = "Назад"
-                )
+            Box(modifier = Modifier.align(Alignment.Top)){
+                BackButton(onBack)
             }
 
             Text(
@@ -195,7 +204,7 @@ private fun SelectExistingScreen(
             label = { Text("Поиск по имени") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(8.dp)
         )
 
         val filteredPlayers = if (searchQuery.isBlank()) {
@@ -222,13 +231,13 @@ private fun SelectExistingScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(filteredPlayers) { player ->
                     PlayerSelectionCard(
                         player = player,
-                        onSelected = { onPlayerSelected(player) }
+                        onSelected = { onPlayerSelected(player) },
+                        onDeletedPlayer = {onDeletedPlayer(player)}
                     )
                 }
             }
@@ -238,6 +247,7 @@ private fun SelectExistingScreen(
 
 @Composable
 private fun CreateNewScreen(
+    playerViewModel: PlayerViewModel,
     onRegisteredPlayer: (PlayerEntity) -> Unit,
     onBack: () -> Unit
 ) {
@@ -263,27 +273,21 @@ private fun CreateNewScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         item {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
-                Button(
-                    onClick = onBack,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_media_previous),
-                        contentDescription = "Назад"
-                    )
+                Box(modifier = Modifier.align(Alignment.Top)){
+                    BackButton(onBack)
                 }
 
                 Text(
-                    "Регистрация нового игрока",
+                    "Регистрация",
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(start = 16.dp)
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -316,7 +320,7 @@ private fun CreateNewScreen(
                                 selected = (gender == option),
                                 onClick = { gender = option }
                             )
-                            .padding(end = 16.dp),
+                            .padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -407,8 +411,7 @@ private fun CreateNewScreen(
                     }
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                    .fillMaxWidth(),
                 enabled = fullName.isNotBlank() && gender.isNotBlank() && course.isNotBlank()
             ) {
                 Text("Зарегистрироваться")
@@ -425,34 +428,15 @@ private fun PlayerInfoCard(player: PlayerEntity) {
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(vertical = 8.dp)) {
             Text(
-                "Текущий игрок:",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            Text(
-                player.name,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Пол: ${player.gender}", style = MaterialTheme.typography.bodyMedium)
-                Text("Курс: ${player.course}", style = MaterialTheme.typography.bodyMedium)
-                Text("Сложность: ${player.difficulty}", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Text(
-                "Знак зодиака: ${player.zodiac}",
+                "Текущий игрок: ${player.name}",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
             )
+
+            PrintCardInfo(player)
         }
     }
 }
@@ -460,7 +444,8 @@ private fun PlayerInfoCard(player: PlayerEntity) {
 @Composable
 private fun PlayerSelectionCard(
     player: PlayerEntity,
-    onSelected: () -> Unit
+    onSelected: () -> Unit,
+    onDeletedPlayer: (PlayerEntity) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -468,26 +453,64 @@ private fun PlayerSelectionCard(
             .clickable(onClick = onSelected),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = player.name,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-
+        Column(modifier = Modifier.padding(vertical = 8.dp)) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Пол: ${player.gender}", style = MaterialTheme.typography.bodyMedium)
-                Text("Курс: ${player.course}", style = MaterialTheme.typography.bodyMedium)
-                Text("Сложность: ${player.difficulty}", style = MaterialTheme.typography.bodyMedium)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ){
+                Text(
+                    "Текущий игрок: ${player.name}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                )
+
+                IconButton(
+                    onClick = { onDeletedPlayer(player) },
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Удалить"
+                    )
+                }
             }
 
+            PrintCardInfo(player)
+        }
+    }
+}
+
+@Composable
+fun BackButton(onBack: () -> Unit) {
+    IconButton(
+        onClick = onBack
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "Назад"
+        )
+    }
+}
+
+@Composable
+fun PrintCardInfo(player: PlayerEntity) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceAround,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column {
+            Text("Пол: ${player.gender}", style = MaterialTheme.typography.bodyMedium)
+            Text("Курс: ${player.course}", style = MaterialTheme.typography.bodyMedium)
+        }
+        Column {
             Text(
-                "Знак зодиака: ${player.zodiac}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
+                "Сложность: ${player.difficulty}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                "Зодиак: ${player.zodiac}",
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -529,16 +552,42 @@ fun getZodiacImage(zodiac: String): Int {
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview
 @Composable
 fun RegistrationPanelPreview() {
+    val mockPlayers = mutableListOf(
+        PlayerEntity(
+            name = "Макс",
+            gender = "муж",
+            course = "4 курс",
+            difficulty = 3,
+            birthDate = System.currentTimeMillis() - (25 * 365 * 24 * 60 * 60 * 1000L),
+            zodiac = "Рак"
+        ),
+        PlayerEntity(
+            name = "Анна",
+            gender = "жен",
+            course = "2 курс",
+            difficulty = 2,
+            birthDate = System.currentTimeMillis() - (20 * 365 * 24 * 60 * 60 * 1000L),
+            zodiac = "Дева"
+        )
+    )
+
     GameBugsTheme {
+        val playerViewModel = PlayerViewModel(MockPlayerRepository())
+
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
             RegistrationPanel(
-                onRegisteredPlayer = {}
+                onRegisteredPlayer = {},
+                existingPlayers = mockPlayers,
+                onPlayerSelected = {},
+                onDeletedPlayer = {},
+                playerViewModel
             )
         }
     }

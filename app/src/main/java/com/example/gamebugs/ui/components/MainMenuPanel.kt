@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -141,7 +139,11 @@ fun MainMenuPanel(
                                 onPlayerUpdated(selectedPlayer)
                                 isRegistered = true
                                 settings.gameDifficult = selectedPlayer.difficulty
-                            }
+                            },
+                            onDeletedPlayer = { deletedPlayer ->
+                                playerViewModel.deletePlayer(deletedPlayer)
+                            },
+                            playerViewModel = playerViewModel
                         )
                     }
                     1 -> RulesPanel()
