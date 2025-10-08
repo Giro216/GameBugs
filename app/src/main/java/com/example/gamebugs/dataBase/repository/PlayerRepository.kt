@@ -35,7 +35,7 @@ class PlayerRepository(private val playerDao: PlayerDao) : IPlayerRepository {
 }
 
 class MockPlayerRepository : IPlayerRepository {
-    private val mockPlayers = mutableListOf(
+    val mockPlayers = mutableListOf(
         PlayerEntity(
             name = "Макс",
             gender = "муж",

@@ -125,7 +125,7 @@ fun MainMenuPanel(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .padding(10.dp)
+                    .padding(5.dp)
             ) {
                 when (selectedTab) {
                     0 -> {
