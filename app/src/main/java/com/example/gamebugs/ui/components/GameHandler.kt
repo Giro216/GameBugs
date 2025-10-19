@@ -2,8 +2,6 @@ package com.example.gamebugs.ui.components
 
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -31,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -49,70 +45,11 @@ import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
+import com.example.gamebugs.model.BugType
 import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import kotlinx.coroutines.delay
 import kotlin.math.max
-
-@Composable
-fun BugItem(
-    modifier: Modifier = Modifier,
-    bug: Bug,
-    onBugSquashed: (Int) -> Unit,
-    screenWidth: Float,
-    screenHeight: Float,
-
-) {
-    var position by remember { mutableStateOf(bug.getPosition()) }
-    var isAlive by remember { mutableStateOf(bug.isAlive()) }
-    var health by remember { mutableIntStateOf(bug.state.health) }
-    val bugSize = 80.dp
-
-    LaunchedEffect(bug) {
-        while (true) {
-            delay(16)
-            if (isAlive) {
-                bug.move(screenWidth, screenHeight)
-                position = bug.getPosition()
-            } else {
-                break
-            }
-        }
-    }
-
-    LaunchedEffect(bug) {
-        position = bug.getPosition()
-        isAlive = bug.isAlive()
-        health = bug.state.health
-    }
-
-    val scale by animateFloatAsState(
-        targetValue = if (isAlive) 1f else 0f,
-        animationSpec = tween(durationMillis = 100)
-    )
-
-    if (scale > 0.01f) {
-        Image(
-            painter = bug.getImage(),
-            contentDescription = "жук",
-            modifier = modifier
-                .size(bugSize)
-                .offset(x = position.first.dp, y = position.second.dp)
-                .scale(scale)
-                .clickable {
-                    if (isAlive) {
-                        bug.onDamage()
-                        isAlive = bug.isAlive()
-                        health = bug.state.health
-
-                        if (!isAlive) {
-                            onBugSquashed(bug.getReward())
-                        }
-                    }
-                }
-        )
-    }
-}
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
@@ -173,6 +110,19 @@ fun GameHandler(
         mutableStateOf(createInitialBugs())
     }
 
+    fun addBonusBug() {
+        if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
+            if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
+                val bonusBug = BugFactory.createBonusBug()
+                bonusBug.setRandomPosition(
+                    configuration.screenWidthDp - 80,
+                    configuration.screenHeightDp - 80
+                )
+                bugs = bugs + bonusBug
+            }
+        }
+    }
+
     LaunchedEffect(gameState, gameSessionKey) {
         if (gameState == "playing") {
             lastUpdateTime = System.currentTimeMillis()
@@ -186,10 +136,6 @@ fun GameHandler(
                     roundTimeLeft = roundDuration - gameTime
                     lastUpdateTime = currentTime
 
-//                    if (gameTime % bonusInterval == 0 && gameTime > 0) {
-//                        spawnBonusBug()
-//                    }
-
                     val allBugsDead = bugs.all { !it.isAlive() }
                     if (gameTime >= roundDuration || allBugsDead) {
                         gameState = "gameOver"
@@ -198,6 +144,18 @@ fun GameHandler(
                 }
 
                 delay(16)
+            }
+        }
+    }
+
+    var lastBonusInterval by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(gameState, gameTime) {
+        if (gameState == "playing") {
+            val currentInterval = gameTime / bonusInterval
+
+            if (gameTime > 0 && currentInterval > lastBonusInterval) {
+                lastBonusInterval = currentInterval
+                addBonusBug()
             }
         }
     }
@@ -398,10 +356,6 @@ fun GameHandler(
             }
         }
     }
-}
-
-private fun spawnBonusBug() {
-    TODO("Not yet implemented")
 }
 
 @SuppressLint("ViewModelConstructorInComposable")
