@@ -6,19 +6,20 @@ import kotlin.math.sin
 class SpiderBug(speedFactor: Float) : Bug(BugType.SPIDER, speedFactor = speedFactor) {
     // Паук двигается прямолинейно
     override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        val speed = type.speed * this.speedFactor
-        if (Math.random() < 0.02) {
-            state.direction += (Math.random() - 0.5).toFloat() * 0.5f
+        val speed = getAdjustedSpeed()
+        val phaseSpeed = getPhaseSpeed()
+        if (Math.random() < 0.1 * speedFactor) {
+            state.direction += (Math.random() - 0.5) + 0.1
         }
 
-        val newX = state.position.first + cos(state.direction.toDouble()).toFloat() * speed
-        val newY = state.position.second + sin(state.direction.toDouble()).toFloat() * speed
+        val newX = state.position.first + cos(state.direction) * speed
+        val newY = state.position.second + sin(state.direction) * speed
 
         val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
 
         state = state.copy(
             position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.1f
+            movementPhase = state.movementPhase + phaseSpeed
         )
         return state
     }
@@ -26,5 +27,4 @@ class SpiderBug(speedFactor: Float) : Bug(BugType.SPIDER, speedFactor = speedFac
         state = state.copy(isAlive = false)
         return state
     }
-    override fun getReward(): Int = type.basePoints
 }

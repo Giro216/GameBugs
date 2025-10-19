@@ -4,27 +4,22 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class RhinocerosBug(speedFactor: Float) : Bug(BugType.RHINOCEROS, speedFactor = speedFactor) {
-    // Носорог двигается по кругу
+
     override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        val speed = type.speed * this.speedFactor
-        state.movementPhase += 0.05f
-
-        val circleRadius = 30f
-        val centerX = state.position.first + cos(state.direction.toDouble()).toFloat() * speed * 0.5f
-        val centerY = state.position.second + sin(state.direction.toDouble()).toFloat() * speed * 0.5f
-
-        val newX = centerX + cos(state.movementPhase.toDouble()).toFloat() * circleRadius
-        val newY = centerY + sin(state.movementPhase.toDouble()).toFloat() * circleRadius
-
-        if (Math.random() < 0.1) {
-            state.direction = (Math.random() * Math.PI * 2).toFloat()
+        val speed = getAdjustedSpeed()
+        val phaseSpeed = getPhaseSpeed() + 0.1
+        if (Math.random() < 0.1 * speedFactor) {
+            state.direction += (Math.random() - 0.5) + 0.3
         }
+
+        val newX = state.position.first + cos(state.direction) * speed
+        val newY = state.position.second + sin(state.direction) * speed
 
         val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
 
         state = state.copy(
             position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.05f
+            movementPhase = state.movementPhase + phaseSpeed
         )
         return state
     }
@@ -32,5 +27,4 @@ class RhinocerosBug(speedFactor: Float) : Bug(BugType.RHINOCEROS, speedFactor = 
         state = state.copy(isAlive = false)
         return state
     }
-    override fun getReward(): Int = type.basePoints
 }

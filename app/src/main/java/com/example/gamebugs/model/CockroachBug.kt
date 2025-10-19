@@ -4,23 +4,24 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class CockroachBug(speedFactor: Float) : Bug(BugType.COCKROACH, speedFactor = speedFactor) {
-    // Таракан двигается по синусоиде
+
     override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        val speed = type.speed * this.speedFactor
-        state.movementPhase += 0.1f
+        val speed = getAdjustedSpeed()
+        val phaseSpeed = getPhaseSpeed()
 
-        val baseX = state.position.first + cos(state.direction.toDouble()).toFloat() * speed
-        val baseY = state.position.second + sin(state.direction.toDouble()).toFloat() * speed
-        val waveOffset = sin(state.movementPhase.toDouble()).toFloat() * 20f
+        state.movementPhase += phaseSpeed + 0.1f
 
-        val newX = baseX + cos(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
-        val newY = baseY + sin(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
+        val baseX = state.position.first + cos(state.direction) * speed
+        val baseY = state.position.second + sin(state.direction) * speed
+        val waveOffset = sin(state.movementPhase) * 20f
+
+        val newX = baseX + cos(state.direction + Math.PI / 2) * waveOffset
+        val newY = baseY + sin(state.direction + Math.PI / 2) * waveOffset
 
         val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
 
         state = state.copy(
-            position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.1f
+            position = Pair(checkedX, checkedY)
         )
         return state
     }
@@ -32,5 +33,4 @@ class CockroachBug(speedFactor: Float) : Bug(BugType.COCKROACH, speedFactor = sp
         }
         return state
     }
-    override fun getReward(): Int = type.basePoints
 }

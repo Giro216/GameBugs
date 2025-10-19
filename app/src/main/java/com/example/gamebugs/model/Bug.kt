@@ -6,18 +6,19 @@ import androidx.compose.ui.res.painterResource
 import com.example.gamebugs.R
 
 data class BugState(
-    var position: Pair<Float, Float> = Pair(0f, 0f),
+    var position: Pair<Double, Double> = Pair(0.0, 0.0),
     var health: Int = 1,
     var isAlive: Boolean = true,
     var isVisible: Boolean = true,
-    var direction: Float = 0f,
-    var movementPhase: Float = 0f
+    var direction: Double = 0.0,
+    var movementPhase: Double = 0.0
 )
 
-enum class BugType(val imageRes: Int, val basePoints: Int, var speed: Float) {
-    SPIDER(R.drawable.spider, 20, 3f),
-    COCKROACH(R.drawable.cockroach, 35, 2f),
-    RHINOCEROS(R.drawable.rhinoceros, 35, 0.00002f)
+enum class BugType(val imageRes: Int, val basePoints: Int, var speed: Double) {
+    SPIDER(R.drawable.spider, 10, 3.5),
+    COCKROACH(R.drawable.cockroach, 20, 0.5),
+    RHINOCEROS(R.drawable.rhinoceros, 15, 4.5),
+    GOLDBUG(R.drawable.bonusbug, 20, 8.0)
 }
 
 abstract class Bug(
@@ -27,33 +28,32 @@ abstract class Bug(
 ) {
     abstract fun move(screenWidth: Float, screenHeight: Float): BugState
     abstract fun onDamage(): BugState
-    abstract fun getReward(): Int
 
     fun isAlive(): Boolean = state.isAlive
-    fun getPosition(): Pair<Float, Float> = state.position
+    fun getPosition(): Pair<Double, Double> = state.position
     fun setRandomPosition(maxX: Int, maxY: Int) {
         state = state.copy(
             position = Pair(
-                (80 until maxX - 80).random().toFloat(),
-                (80 until maxY - 80).random().toFloat()
+                (80 until maxX - 80).random().toDouble(),
+                (80 until maxY - 80).random().toDouble()
             ),
-            direction = (0 until 360).random().toFloat() * (Math.PI.toFloat() / 180f),
-            movementPhase = (0 until 100).random().toFloat()
+            direction = (0 until 360).random() * (Math.PI / 180f),
+            movementPhase = (0 until 100).random().toDouble()
         )
     }
-
     @Composable
     fun getImage(): Painter = painterResource(type.imageRes)
 
-    protected fun checkBoundaries(newX: Float, newY: Float, screenWidth: Float, screenHeight: Float): Pair<Float, Float> {
+    fun getReward(): Int = type.basePoints
+    protected fun checkBoundaries(newX: Double, newY: Double, screenWidth: Float, screenHeight: Float): Pair<Double, Double> {
+        //TODO отследить где жук отталкивается от левой стены
         var x = newX
         var y = newY
-        val bugSize = 80f
+        val bugSize = 80.0
 
-        // Отражение от границ
         if (x < bugSize/2) {
             x = bugSize/2
-            state.direction = Math.PI.toFloat() - state.direction
+            state.direction = Math.PI - state.direction
         } else if (x > screenWidth - bugSize/2) {
             x = screenWidth - bugSize/2
             state.direction = Math.PI.toFloat() - state.direction
@@ -69,4 +69,6 @@ abstract class Bug(
 
         return Pair(x, y)
     }
+    protected fun getAdjustedSpeed(): Double = type.speed * speedFactor
+    protected fun getPhaseSpeed(): Float = 0.05f * speedFactor
 }
