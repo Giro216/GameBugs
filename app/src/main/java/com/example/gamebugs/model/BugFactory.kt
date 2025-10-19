@@ -1,19 +1,15 @@
 package com.example.gamebugs.model
 
 object BugFactory {
-    fun createSpiderBug(): Bug = SpiderBug()
-    fun createCockroachBug(): Bug = CockroachBug()
-    fun createRhinocerosBug(): Bug = RhinocerosBug()
+    fun createSpiderBug(speedFactor: Float): Bug = SpiderBug(speedFactor)
+    fun createCockroachBug(speedFactor: Float): Bug = CockroachBug(speedFactor)
+    fun createRhinocerosBug(speedFactor: Float): Bug = RhinocerosBug(speedFactor)
 
     fun createRandomBug(gameSpeed: Float): Bug {
-        for (it in BugType.entries){
-            it.speed *= gameSpeed
-        }
-
         return when ((1..3).random()) {
-            1 -> createSpiderBug()
-            2 -> createCockroachBug()
-            else -> createRhinocerosBug()
+            1 -> createSpiderBug(gameSpeed)
+            2 -> createCockroachBug(gameSpeed)
+            else -> createRhinocerosBug(gameSpeed)
         }
     }
 }

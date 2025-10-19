@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import com.example.gamebugs.R
-import kotlin.math.cos
-import kotlin.math.sin
 
 data class BugState(
     var position: Pair<Float, Float> = Pair(0f, 0f),
@@ -24,7 +22,8 @@ enum class BugType(val imageRes: Int, val basePoints: Int, var speed: Float) {
 
 abstract class Bug(
     val type: BugType,
-    var state: BugState = BugState()
+    var state: BugState = BugState(),
+    var speedFactor: Float
 ) {
     abstract fun move(screenWidth: Float, screenHeight: Float): BugState
     abstract fun onDamage(): BugState
@@ -70,91 +69,4 @@ abstract class Bug(
 
         return Pair(x, y)
     }
-}
-
-class SpiderBug : Bug(BugType.SPIDER) {
-    // Паук двигается прямолинейно
-    override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        if (Math.random() < 0.02) {
-            state.direction += (Math.random() - 0.5).toFloat() * 0.5f
-        }
-
-        val newX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed
-        val newY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed
-
-        val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
-
-        state = state.copy(
-            position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.1f
-        )
-        return state
-    }
-    override fun onDamage(): BugState {
-        state = state.copy(isAlive = false)
-        return state
-    }
-    override fun getReward(): Int = type.basePoints
-}
-
-class CockroachBug : Bug(BugType.COCKROACH) {
-    // Таракан двигается по синусоиде
-    override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        state.movementPhase += 0.1f
-
-        val baseX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed
-        val baseY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed
-        val waveOffset = sin(state.movementPhase.toDouble()).toFloat() * 20f
-
-        val newX = baseX + cos(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
-        val newY = baseY + sin(state.direction.toDouble() + Math.PI / 2).toFloat() * waveOffset
-
-        val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
-
-        state = state.copy(
-            position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.1f
-        )
-        return state
-    }
-    override fun onDamage(): BugState {
-        state = if (state.health > 1) {
-            state.copy(health = state.health - 1)
-        } else {
-            state.copy(isAlive = false)
-        }
-        return state
-    }
-    override fun getReward(): Int = type.basePoints
-}
-
-class RhinocerosBug : Bug(BugType.RHINOCEROS) {
-    // Носорог двигается по кругу
-    override fun move(screenWidth: Float, screenHeight: Float): BugState {
-        state.movementPhase += 0.05f
-
-        val circleRadius = 30f
-        val centerX = state.position.first + cos(state.direction.toDouble()).toFloat() * type.speed * 0.5f
-        val centerY = state.position.second + sin(state.direction.toDouble()).toFloat() * type.speed * 0.5f
-
-        val newX = centerX + cos(state.movementPhase.toDouble()).toFloat() * circleRadius
-        val newY = centerY + sin(state.movementPhase.toDouble()).toFloat() * circleRadius
-
-        if (Math.random() < 0.1) {
-            state.direction = (Math.random() * Math.PI * 2).toFloat()
-        }
-
-        val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
-
-        state = state.copy(
-            position = Pair(checkedX, checkedY),
-            movementPhase = state.movementPhase + 0.05f
-        )
-        return state
-    }
-    override fun onDamage(): BugState {
-        state = state.copy(isAlive = false)
-        return state
-    }
-    override fun getReward(): Int = type.basePoints
 }

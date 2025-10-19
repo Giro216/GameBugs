@@ -61,7 +61,6 @@ fun BugItem(
     onBugSquashed: (Int) -> Unit,
     screenWidth: Float,
     screenHeight: Float,
-    gameSpeed: Float = 1.0f,
 
 ) {
     var position by remember { mutableStateOf(bug.getPosition()) }
@@ -69,7 +68,7 @@ fun BugItem(
     var health by remember { mutableIntStateOf(bug.state.health) }
     val bugSize = 80.dp
 
-    LaunchedEffect(bug, gameSpeed) {
+    LaunchedEffect(bug) {
         while (true) {
             delay(16)
             if (isAlive) {
@@ -386,7 +385,6 @@ fun GameHandler(
                             onBugSquashed = { reward -> handleHit(reward) },
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
-                            gameSpeed = settings.gameSpeed,
                             modifier = Modifier
                         )
                     }
