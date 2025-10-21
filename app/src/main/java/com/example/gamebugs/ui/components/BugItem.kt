@@ -26,18 +26,24 @@ fun BugItem(
     onBugSquashed: (Int) -> Unit,
     screenWidth: Float,
     screenHeight: Float,
-
-    ) {
+    gameSpeed: Float = 1.0f,
+    gravityX: Float,
+    gravityY: Float
+) {
     var position by remember { mutableStateOf(bug.getPosition()) }
     var isAlive by remember { mutableStateOf(bug.isAlive()) }
     var health by remember { mutableIntStateOf(bug.state.health) }
     val bugSize = 80.dp
 
-    LaunchedEffect(bug) {
+    LaunchedEffect(bug, gameSpeed, gravityX, gravityY) {
         while (true) {
             delay(16)
             if (isAlive) {
-                bug.move(screenWidth, screenHeight)
+                if (gravityX != 0f || gravityY != 0f) {
+                    bug.moveWithGravity(screenWidth, screenHeight, gravityX, gravityY)
+                } else {
+                    bug.move(screenWidth, screenHeight)
+                }
                 position = bug.getPosition()
             } else {
                 break

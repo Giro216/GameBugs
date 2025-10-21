@@ -41,6 +41,19 @@ abstract class Bug(
             movementPhase = (0 until 100).random().toDouble()
         )
     }
+    open fun moveWithGravity(screenWidth: Float, screenHeight: Float, gravityX: Float, gravityY: Float): BugState {
+        val gravityStrength = 3.0f
+
+        val newX = state.position.first + gravityX * gravityStrength
+        val newY = state.position.second + gravityY * gravityStrength
+
+        val (checkedX, checkedY) = checkBoundaries(newX, newY, screenWidth, screenHeight)
+
+        state = state.copy(
+            position = Pair(checkedX, checkedY)
+        )
+        return state
+    }
     @Composable
     fun getImage(): Painter = painterResource(type.imageRes)
 

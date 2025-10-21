@@ -1,6 +1,11 @@
 package com.example.gamebugs.ui.components
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,9 +23,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +69,7 @@ fun GameHandler(
     playerViewModel: PlayerViewModel
 ) {
     val configuration = LocalConfiguration.current
+    val context = LocalContext.current
     var totalScore by remember { mutableIntStateOf(0) }
     var gameState by remember { mutableStateOf("playing") }
     var gameSessionKey by remember { mutableIntStateOf(0) }
@@ -85,6 +94,56 @@ fun GameHandler(
             5 -> 30
             else -> 1
         })
+    }
+
+    var isGravityEffectActive by remember { mutableStateOf(false) }
+    var gravityEffectEndTime by remember { mutableLongStateOf(0L) }
+
+    var accelerometerX by remember { mutableFloatStateOf(0f) }
+    var accelerometerY by remember { mutableFloatStateOf(0f) }
+
+    fun activateGravityEffect() {
+        isGravityEffectActive = true
+        gravityEffectEndTime = System.currentTimeMillis() + 5000
+    }
+
+    val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+    val sensorListener = remember {
+        object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER && isGravityEffectActive) {
+                    accelerometerX = - event.values[0]
+                    accelerometerY = event.values[1]
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+    }
+
+    DisposableEffect(Unit) {
+        sensorManager.registerListener(
+            sensorListener,
+            accelerometer,
+            SensorManager.SENSOR_DELAY_GAME
+        )
+
+        onDispose {
+            sensorManager.unregisterListener(sensorListener)
+        }
+    }
+
+    LaunchedEffect(isGravityEffectActive, gameState) {
+        if (isGravityEffectActive && gameState == "playing") {
+            while (System.currentTimeMillis() < gravityEffectEndTime) {
+                delay(16)
+            }
+            isGravityEffectActive = false
+            accelerometerX = 0f
+            accelerometerY = 0f
+        }
     }
 
     BackHandler(enabled = gameState == "playing") {
@@ -113,7 +172,7 @@ fun GameHandler(
     fun addBonusBug() {
         if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
             if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
-                val bonusBug = BugFactory.createBonusBug()
+                val bonusBug = BugFactory.createBonusBug(onBonusActivated = ::activateGravityEffect)
                 bonusBug.setRandomPosition(
                     configuration.screenWidthDp - 80,
                     configuration.screenHeightDp - 80
@@ -343,7 +402,9 @@ fun GameHandler(
                             onBugSquashed = { reward -> handleHit(reward) },
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
-                            modifier = Modifier
+                            modifier = Modifier,
+                            gravityX = if (isGravityEffectActive) accelerometerX else 0f,
+                            gravityY = if (isGravityEffectActive) accelerometerY else 0f
                         )
                     }
                 }
