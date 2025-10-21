@@ -47,6 +47,7 @@ dependencies {
 
     //noinspection UseTomlInstead
     implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.compose.ui:ui:1.5.4")
     //noinspection UseTomlInstead
     ksp("androidx.room:room-compiler:$roomVersion")
     implementation(libs.androidx.core.ktx)

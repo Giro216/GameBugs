@@ -67,7 +67,7 @@ fun RegistrationPanel(
     onDeletedPlayer: (PlayerEntity) -> Unit,
     playerViewModel: PlayerViewModel
 ) {
-    var currentScreen by remember { mutableStateOf<RegistrationScreen>(RegistrationScreen.SelectExisting) }
+    var currentScreen by remember { mutableStateOf<RegistrationScreen>(RegistrationScreen.Start) }
     var selectedExistingPlayer by remember { mutableStateOf<PlayerEntity?>(null) }
 
     Column(

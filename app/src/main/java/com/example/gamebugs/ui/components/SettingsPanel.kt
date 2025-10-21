@@ -103,7 +103,7 @@ fun SettingsPanel(
                 onSavedSettings(settings)
             },
             enabled =
-                ((gameSpeed.isNotBlank() && gameSpeed.toFloat() > 0 && gameSpeed.toFloat() < 3)
+                ((gameSpeed.isNotBlank() && gameSpeed.toFloat() > 0 && gameSpeed.toFloat() <= 3)
                     && maxBeetles.isNotBlank()
                     && bonusInterval.isNotBlank()
                     && roundDuration.isNotBlank()),

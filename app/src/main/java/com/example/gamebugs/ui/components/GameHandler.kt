@@ -1,9 +1,14 @@
 package com.example.gamebugs.ui.components
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.media.AudioAttributes
+import android.media.SoundPool
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,7 +17,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -21,9 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -31,9 +37,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
-import com.example.gamebugs.dataBase.model.GameRecord
 import com.example.gamebugs.dataBase.model.PlayerEntity
 import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
 import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
@@ -49,71 +54,11 @@ import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
+import com.example.gamebugs.model.BugType
 import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import kotlinx.coroutines.delay
 import kotlin.math.max
-
-@Composable
-fun BugItem(
-    modifier: Modifier = Modifier,
-    bug: Bug,
-    onBugSquashed: (Int) -> Unit,
-    screenWidth: Float,
-    screenHeight: Float,
-    gameSpeed: Float = 1.0f,
-
-) {
-    var position by remember { mutableStateOf(bug.getPosition()) }
-    var isAlive by remember { mutableStateOf(bug.isAlive()) }
-    var health by remember { mutableIntStateOf(bug.state.health) }
-    val bugSize = 80.dp
-
-    LaunchedEffect(bug, gameSpeed) {
-        while (true) {
-            delay(16)
-            if (isAlive) {
-                bug.move(screenWidth, screenHeight)
-                position = bug.getPosition()
-            } else {
-                break
-            }
-        }
-    }
-
-    LaunchedEffect(bug) {
-        position = bug.getPosition()
-        isAlive = bug.isAlive()
-        health = bug.state.health
-    }
-
-    val scale by animateFloatAsState(
-        targetValue = if (isAlive) 1f else 0f,
-        animationSpec = tween(durationMillis = 100)
-    )
-
-    if (scale > 0.01f) {
-        Image(
-            painter = bug.getImage(),
-            contentDescription = "жук",
-            modifier = modifier
-                .size(bugSize)
-                .offset(x = position.first.dp, y = position.second.dp)
-                .scale(scale)
-                .clickable {
-                    if (isAlive) {
-                        bug.onDamage()
-                        isAlive = bug.isAlive()
-                        health = bug.state.health
-
-                        if (!isAlive) {
-                            onBugSquashed(bug.getReward())
-                        }
-                    }
-                }
-        )
-    }
-}
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
@@ -125,6 +70,7 @@ fun GameHandler(
     playerViewModel: PlayerViewModel
 ) {
     val configuration = LocalConfiguration.current
+    val context = LocalContext.current
     var totalScore by remember { mutableIntStateOf(0) }
     var gameState by remember { mutableStateOf("playing") }
     var gameSessionKey by remember { mutableIntStateOf(0) }
@@ -151,6 +97,95 @@ fun GameHandler(
         })
     }
 
+    var isGravityEffectActive by remember { mutableStateOf(false) }
+    var gravityEffectEndTime by remember { mutableLongStateOf(0L) }
+
+    var accelerometerX by remember { mutableFloatStateOf(0f) }
+    var accelerometerY by remember { mutableFloatStateOf(0f) }
+
+    val audioAttributes = remember {
+        AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+    }
+
+
+    val soundPool = remember {
+        SoundPool.Builder()
+            .setMaxStreams(4)
+            .setAudioAttributes(audioAttributes)
+            .build()
+    }
+
+
+    var screamSoundId by remember { mutableIntStateOf(0) }
+    var soundsLoaded by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(Unit) {
+        try {
+            screamSoundId = soundPool.load(context, R.raw.falling_scream, 1)
+        } catch (e: Exception) {
+            print(e.message)
+        }
+    }
+
+
+    DisposableEffect(soundPool) {
+        val listener = SoundPool.OnLoadCompleteListener { _, _, status ->
+            if (status == 0) soundsLoaded = true
+        }
+        soundPool.setOnLoadCompleteListener(listener)
+
+
+        onDispose {
+            soundPool.unload(screamSoundId)
+            soundPool.release()
+        }
+    }
+
+
+    fun activateGravityEffect() {
+        isGravityEffectActive = true
+        gravityEffectEndTime = System.currentTimeMillis() + 5000
+        if (soundsLoaded && screamSoundId != 0) {
+            soundPool.play(screamSoundId, 0.5f, 0.5f, 1, 0, 1f)
+        }
+    }
+
+    val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+    val sensorListener = remember {
+        object : SensorEventListener {
+            private var lastSensorUpdate = 0L
+            override fun onSensorChanged(event: SensorEvent?) {
+                val now = System.currentTimeMillis()
+                if (now - lastSensorUpdate < 50L) return
+                lastSensorUpdate = now
+                if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER && isGravityEffectActive) {
+                    accelerometerX = - event.values[0]
+                    accelerometerY = event.values[1]
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+    }
+
+    DisposableEffect(Unit) {
+        sensorManager.registerListener(
+            sensorListener,
+            accelerometer,
+            SensorManager.SENSOR_DELAY_GAME
+        )
+
+        onDispose {
+            sensorManager.unregisterListener(sensorListener)
+        }
+    }
+
     BackHandler(enabled = gameState == "playing") {
         gameState = "paused"
     }
@@ -174,6 +209,19 @@ fun GameHandler(
         mutableStateOf(createInitialBugs())
     }
 
+    fun addBonusBug() {
+        if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
+            if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
+                val bonusBug = BugFactory.createBonusBug(onBonusActivated = ::activateGravityEffect)
+                bonusBug.setRandomPosition(
+                    configuration.screenWidthDp - 80,
+                    configuration.screenHeightDp - 80
+                )
+                bugs = bugs + bonusBug
+            }
+        }
+    }
+
     LaunchedEffect(gameState, gameSessionKey) {
         if (gameState == "playing") {
             lastUpdateTime = System.currentTimeMillis()
@@ -187,10 +235,6 @@ fun GameHandler(
                     roundTimeLeft = roundDuration - gameTime
                     lastUpdateTime = currentTime
 
-//                    if (gameTime % bonusInterval == 0 && gameTime > 0) {
-//                        spawnBonusBug()
-//                    }
-
                     val allBugsDead = bugs.all { !it.isAlive() }
                     if (gameTime >= roundDuration || allBugsDead) {
                         gameState = "gameOver"
@@ -198,7 +242,26 @@ fun GameHandler(
                     }
                 }
 
+                if (isGravityEffectActive){
+                    if (currentTime > gravityEffectEndTime){
+                        isGravityEffectActive = false
+                        accelerometerX = 0f
+                        accelerometerY = 0f
+                    }
+                }
                 delay(16)
+            }
+        }
+    }
+
+    var lastBonusInterval by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(gameState, gameTime) {
+        if (gameState == "playing") {
+            val currentInterval = gameTime / bonusInterval
+
+            if (gameTime > 0 && currentInterval > lastBonusInterval && !isGravityEffectActive) {
+                lastBonusInterval = currentInterval
+                addBonusBug()
             }
         }
     }
@@ -283,11 +346,12 @@ fun GameHandler(
     fun onGameOver() {
         LaunchedEffect(Unit) {
             delay(3000)
-            gameViewModel.saveRecord(GameRecord(
-                playerName = player.name,
+            gameViewModel.saveRecord(
+                playerId = player.id,
                 score = totalScore,
                 difficulty = settings.gameDifficult,
-            ))
+                playerName = player.name
+            )
             navController.popBackStack(Screens.MainMenu.route, inclusive = false)
         }
 
@@ -386,8 +450,9 @@ fun GameHandler(
                             onBugSquashed = { reward -> handleHit(reward) },
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
-                            gameSpeed = settings.gameSpeed,
-                            modifier = Modifier
+                            modifier = Modifier,
+                            gravityX = if (isGravityEffectActive) accelerometerX else 0f,
+                            gravityY = if (isGravityEffectActive) accelerometerY else 0f
                         )
                     }
                 }
@@ -400,10 +465,6 @@ fun GameHandler(
             }
         }
     }
-}
-
-private fun spawnBonusBug() {
-    TODO("Not yet implemented")
 }
 
 @SuppressLint("ViewModelConstructorInComposable")

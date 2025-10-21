@@ -10,20 +10,6 @@ import kotlinx.coroutines.launch
 
 class GameViewModel(private val repository: IRecordsRepository) : ViewModel() {
 
-//    private val _gameScore = MutableStateFlow(0)
-//    val gameScore: StateFlow<Int> = _gameScore
-//
-//    private val _gameState = MutableStateFlow("playing")
-//    val gameState: StateFlow<String> = _gameState
-//
-//    fun updateScore(points: Int) {
-//        _gameScore.value += points
-//    }
-//
-//    fun setGameState(state: String) {
-//        _gameState.value = state
-//    }
-
     private val _records = MutableStateFlow<List<GameRecord>>(emptyList())
     val records: StateFlow<List<GameRecord>> = _records
 
@@ -33,8 +19,14 @@ class GameViewModel(private val repository: IRecordsRepository) : ViewModel() {
         }
     }
 
-    fun saveRecord(record: GameRecord) {
+    fun saveRecord(playerId: Long, playerName: String, score: Int, difficulty: Int) {
         viewModelScope.launch {
+            val record = GameRecord(
+                playerId = playerId,
+                score = score,
+                difficulty = difficulty,
+                playerName = playerName
+            )
             repository.saveRecord(record)
             loadRecords()
         }
@@ -47,4 +39,7 @@ class GameViewModel(private val repository: IRecordsRepository) : ViewModel() {
         }
     }
 
+    suspend fun getPlayerRecord(playerId: Long): GameRecord? {
+        return repository.getRecordByPlayerId(playerId)
+    }
 }
