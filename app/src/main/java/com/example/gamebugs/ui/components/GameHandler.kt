@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
-import com.example.gamebugs.dataBase.model.GameRecord
 import com.example.gamebugs.dataBase.model.PlayerEntity
 import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
 import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
@@ -347,11 +346,12 @@ fun GameHandler(
     fun onGameOver() {
         LaunchedEffect(Unit) {
             delay(3000)
-            gameViewModel.saveRecord(GameRecord(
-                playerName = player.name,
+            gameViewModel.saveRecord(
+                playerId = player.id,
                 score = totalScore,
                 difficulty = settings.gameDifficult,
-            ))
+                playerName = player.name
+            )
             navController.popBackStack(Screens.MainMenu.route, inclusive = false)
         }
 

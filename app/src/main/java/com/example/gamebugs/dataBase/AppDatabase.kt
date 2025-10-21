@@ -11,7 +11,7 @@ import com.example.gamebugs.dataBase.model.PlayerEntity
 
 @Database(
     entities = [GameRecord::class, PlayerEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
