@@ -6,6 +6,8 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.AudioAttributes
+import android.media.SoundPool
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -102,9 +104,55 @@ fun GameHandler(
     var accelerometerX by remember { mutableFloatStateOf(0f) }
     var accelerometerY by remember { mutableFloatStateOf(0f) }
 
+    val audioAttributes = remember {
+        AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+    }
+
+
+    val soundPool = remember {
+        SoundPool.Builder()
+            .setMaxStreams(4)
+            .setAudioAttributes(audioAttributes)
+            .build()
+    }
+
+
+    var screamSoundId by remember { mutableIntStateOf(0) }
+    var soundsLoaded by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(Unit) {
+        try {
+            screamSoundId = soundPool.load(context, R.raw.falling_scream, 1)
+        } catch (e: Exception) {
+            print(e.message)
+        }
+    }
+
+
+    DisposableEffect(soundPool) {
+        val listener = SoundPool.OnLoadCompleteListener { _, _, status ->
+            if (status == 0) soundsLoaded = true
+        }
+        soundPool.setOnLoadCompleteListener(listener)
+
+
+        onDispose {
+            soundPool.unload(screamSoundId)
+            soundPool.release()
+        }
+    }
+
+
     fun activateGravityEffect() {
         isGravityEffectActive = true
         gravityEffectEndTime = System.currentTimeMillis() + 5000
+        if (soundsLoaded && screamSoundId != 0) {
+            soundPool.play(screamSoundId, 0.5f, 0.5f, 1, 0, 1f)
+        }
     }
 
     val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -132,17 +180,6 @@ fun GameHandler(
 
         onDispose {
             sensorManager.unregisterListener(sensorListener)
-        }
-    }
-
-    LaunchedEffect(isGravityEffectActive, gameState) {
-        if (isGravityEffectActive && gameState == "playing") {
-            while (System.currentTimeMillis() < gravityEffectEndTime) {
-                delay(16)
-            }
-            isGravityEffectActive = false
-            accelerometerX = 0f
-            accelerometerY = 0f
         }
     }
 
@@ -202,6 +239,13 @@ fun GameHandler(
                     }
                 }
 
+                if (isGravityEffectActive){
+                    if (currentTime > gravityEffectEndTime){
+                        isGravityEffectActive = false
+                        accelerometerX = 0f
+                        accelerometerY = 0f
+                    }
+                }
                 delay(16)
             }
         }
@@ -212,7 +256,7 @@ fun GameHandler(
         if (gameState == "playing") {
             val currentInterval = gameTime / bonusInterval
 
-            if (gameTime > 0 && currentInterval > lastBonusInterval) {
+            if (gameTime > 0 && currentInterval > lastBonusInterval && !isGravityEffectActive) {
                 lastBonusInterval = currentInterval
                 addBonusBug()
             }
