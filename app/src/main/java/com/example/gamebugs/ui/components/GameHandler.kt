@@ -160,7 +160,11 @@ fun GameHandler(
 
     val sensorListener = remember {
         object : SensorEventListener {
+            private var lastSensorUpdate = 0L
             override fun onSensorChanged(event: SensorEvent?) {
+                val now = System.currentTimeMillis()
+                if (now - lastSensorUpdate < 50L) return
+                lastSensorUpdate = now
                 if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER && isGravityEffectActive) {
                     accelerometerX = - event.values[0]
                     accelerometerY = event.values[1]

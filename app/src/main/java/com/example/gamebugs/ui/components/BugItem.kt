@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -35,19 +36,21 @@ fun BugItem(
     var health by remember { mutableIntStateOf(bug.state.health) }
     val bugSize = 80.dp
 
-    LaunchedEffect(bug, gameSpeed, gravityX, gravityY) {
-        while (true) {
-            delay(16)
-            if (isAlive) {
-                if (gravityX != 0f || gravityY != 0f) {
-                    bug.moveWithGravity(screenWidth, screenHeight, gravityX, gravityY)
-                } else {
-                    bug.move(screenWidth, screenHeight)
-                }
-                position = bug.getPosition()
+    val currentGravityX by rememberUpdatedState(gravityX)
+    val currentGravityY by rememberUpdatedState(gravityY)
+
+    LaunchedEffect(bug, gameSpeed) {
+        while (isAlive) {
+            val gx = currentGravityX
+            val gy = currentGravityY
+
+            if (gx != 0f || gy != 0f) {
+                bug.moveWithGravity(screenWidth, screenHeight, gx, gy)
             } else {
-                break
+                bug.move(screenWidth, screenHeight)
             }
+            position = bug.getPosition()
+            delay(16)
         }
     }
 
