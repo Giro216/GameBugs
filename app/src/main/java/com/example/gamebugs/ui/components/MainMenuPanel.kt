@@ -31,10 +31,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
 import com.example.gamebugs.dataBase.model.PlayerEntity
-import com.example.gamebugs.model.viewModel.GameViewModel
-import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
+import com.example.gamebugs.model.viewModel.GameViewModel
+import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 

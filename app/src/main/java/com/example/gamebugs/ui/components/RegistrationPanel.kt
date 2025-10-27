@@ -50,8 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gamebugs.R
 import com.example.gamebugs.dataBase.model.PlayerEntity
-import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.dataBase.repository.MockPlayerRepository
+import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
