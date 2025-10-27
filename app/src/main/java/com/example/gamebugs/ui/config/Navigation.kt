@@ -19,7 +19,11 @@ import com.example.gamebugs.ui.components.MainMenuPanel
 import com.example.gamebugs.ui.components.Settings
 
 @Composable
-fun AppNavigation(gameViewModel: GameViewModel, playerViewModel: PlayerViewModel) {
+fun AppNavigation(
+    gameViewModel: GameViewModel,
+    playerViewModel: PlayerViewModel,
+    currencyViewModel: CurrencyViewModel
+) {
     val navController = rememberNavController()
     var playerEntity by remember { mutableStateOf<PlayerEntity?>(null) }
     var settings by remember { mutableStateOf(Settings()) }
@@ -54,6 +58,7 @@ fun AppNavigation(gameViewModel: GameViewModel, playerViewModel: PlayerViewModel
                     navController = navController,
                     gameViewModel = gameViewModel,
                     playerViewModel = playerViewModel,
+                    currencyViewModel = currencyViewModel,
                     settings = settings,
                     player = playerEntity!!
                 )

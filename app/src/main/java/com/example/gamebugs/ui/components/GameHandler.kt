@@ -48,13 +48,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
 import com.example.gamebugs.dataBase.model.PlayerEntity
-import com.example.gamebugs.model.viewModel.GameViewModel
-import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
 import com.example.gamebugs.model.BugType
+import com.example.gamebugs.model.viewModel.CurrencyViewModel
+import com.example.gamebugs.model.viewModel.GameViewModel
+import com.example.gamebugs.model.viewModel.PlayerViewModel
+import com.example.gamebugs.network.repository.MockMetalCurrencyRepository
 import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import kotlinx.coroutines.delay
@@ -67,7 +69,8 @@ fun GameHandler(
     settings: Settings,
     player: PlayerEntity,
     gameViewModel: GameViewModel,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    currencyViewModel: CurrencyViewModel
 ) {
     val configuration = LocalConfiguration.current
     val context = LocalContext.current
@@ -502,12 +505,17 @@ fun GameHandlerPreview() {
                 repository = MockPlayerRepository()
             )
 
+            val currencyViewModel = CurrencyViewModel(
+                repository = MockMetalCurrencyRepository()
+            )
+
             GameHandler(
                 navController = mockNavController,
                 settings = mockSettings,
                 player = mockPlayer,
                 gameViewModel = gameViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
+                currencyViewModel = currencyViewModel
             )
         }
     }
