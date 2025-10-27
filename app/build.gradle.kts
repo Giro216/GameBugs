@@ -43,13 +43,22 @@ android {
 dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
-    val roomVersion = "2.8.1"
 
-    //noinspection UseTomlInstead
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.compose.ui:ui:1.5.4")
-    //noinspection UseTomlInstead
+    //noinspection UseTomlInstead,GradleDependency
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    //noinspection UseTomlInstead,GradleDependency
+    implementation("com.squareup.retrofit2:converter-simplexml:3.0.0")
+    //noinspection UseTomlInstead,GradleDependency
+    implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
+    //noinspection UseTomlInstead,GradleDependency
+    implementation("org.simpleframework:simple-xml:2.7.1")
+    val roomVersion = "2.8.1"
+    //noinspection UseTomlInstead,GradleDependency
     ksp("androidx.room:room-compiler:$roomVersion")
+    //noinspection UseTomlInstead,GradleDependency
+    implementation("androidx.room:room-runtime:$roomVersion")
+    //noinspection UseTomlInstead,GradleDependency
+    implementation("androidx.compose.ui:ui:1.5.4")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
