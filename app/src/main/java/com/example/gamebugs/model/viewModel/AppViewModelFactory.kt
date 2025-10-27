@@ -1,4 +1,4 @@
-package com.example.gamebugs.dataBase.model.viewModel
+package com.example.gamebugs.model.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

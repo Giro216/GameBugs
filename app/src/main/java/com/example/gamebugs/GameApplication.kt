@@ -2,7 +2,7 @@ package com.example.gamebugs
 
 import android.app.Application
 import com.example.gamebugs.dataBase.AppDatabase
-import com.example.gamebugs.dataBase.model.viewModel.AppViewModelFactory
+import com.example.gamebugs.model.viewModel.AppViewModelFactory
 import com.example.gamebugs.dataBase.repository.PlayerRepository
 import com.example.gamebugs.dataBase.repository.RecordsRepository
 
