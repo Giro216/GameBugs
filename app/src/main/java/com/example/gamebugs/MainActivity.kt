@@ -9,8 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
-import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
+import com.example.gamebugs.model.viewModel.CurrencyViewModel
+import com.example.gamebugs.model.viewModel.GameViewModel
+import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.ui.config.AppNavigation
 import com.example.gamebugs.ui.theme.GameBugsTheme
 
@@ -20,6 +21,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private val playerViewModel: PlayerViewModel by viewModels {
+        (application as GameApplication).appViewModelFactory
+    }
+
+    private val currencyViewModel: CurrencyViewModel by viewModels {
         (application as GameApplication).appViewModelFactory
     }
 
@@ -35,7 +40,8 @@ class MainActivity : ComponentActivity() {
                 ){
                     AppNavigation(
                         gameViewModel = gameViewModel,
-                        playerViewModel = playerViewModel
+                        playerViewModel = playerViewModel,
+                        currencyViewModel = currencyViewModel
                     )
                 }
             }

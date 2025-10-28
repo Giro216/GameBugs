@@ -3,10 +3,7 @@ package com.example.gamebugs.model
 import kotlin.math.cos
 import kotlin.math.sin
 
-class BonusBug(
-    private val onBonusActivated: () -> Unit
-) : Bug(BugType.BONUSBUG, speedFactor = 1f) {
-
+class GoldBug(private val goldReward: Int) : Bug(BugType.GOLDBUG, speedFactor = 1f) {
     override fun move(screenWidth: Float, screenHeight: Float): BugState {
         val speed = getAdjustedSpeed()
         val phaseSpeed = getPhaseSpeed()
@@ -29,7 +26,10 @@ class BonusBug(
 
     override fun onDamage(): BugState {
         state = state.copy(isAlive = false)
-        onBonusActivated()
         return state
+    }
+
+    override fun getReward(): Int {
+        return super.getReward() + goldReward
     }
 }

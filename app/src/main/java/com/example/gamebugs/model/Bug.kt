@@ -18,7 +18,8 @@ enum class BugType(val imageRes: Int, val basePoints: Int, var speed: Double) {
     SPIDER(R.drawable.spider, 10, 3.5),
     COCKROACH(R.drawable.cockroach, 20, 0.5),
     RHINOCEROS(R.drawable.rhinoceros, 15, 4.5),
-    GOLDBUG(R.drawable.bonusbug, 20, 8.0)
+    BONUSBUG(R.drawable.mickey_mouse_bonus, 20, 8.0),
+    GOLDBUG(R.drawable.goldbug, 1, 8.0)
 }
 
 abstract class Bug(
@@ -57,7 +58,7 @@ abstract class Bug(
     @Composable
     fun getImage(): Painter = painterResource(type.imageRes)
 
-    fun getReward(): Int = type.basePoints
+    open fun getReward(): Int = type.basePoints
     protected fun checkBoundaries(newX: Double, newY: Double, screenWidth: Float, screenHeight: Float): Pair<Double, Double> {
         //TODO отследить где жук отталкивается от левой стены
         var x = newX

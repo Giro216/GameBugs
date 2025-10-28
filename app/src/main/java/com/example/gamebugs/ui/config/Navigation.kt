@@ -11,14 +11,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.dataBase.model.PlayerEntity
-import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
-import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
+import com.example.gamebugs.model.viewModel.CurrencyViewModel
+import com.example.gamebugs.model.viewModel.GameViewModel
+import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.ui.components.GameHandler
 import com.example.gamebugs.ui.components.MainMenuPanel
 import com.example.gamebugs.ui.components.Settings
 
 @Composable
-fun AppNavigation(gameViewModel: GameViewModel, playerViewModel: PlayerViewModel) {
+fun AppNavigation(
+    gameViewModel: GameViewModel,
+    playerViewModel: PlayerViewModel,
+    currencyViewModel: CurrencyViewModel
+) {
     val navController = rememberNavController()
     var playerEntity by remember { mutableStateOf<PlayerEntity?>(null) }
     var settings by remember { mutableStateOf(Settings()) }
@@ -53,6 +58,7 @@ fun AppNavigation(gameViewModel: GameViewModel, playerViewModel: PlayerViewModel
                     navController = navController,
                     gameViewModel = gameViewModel,
                     playerViewModel = playerViewModel,
+                    currencyViewModel = currencyViewModel,
                     settings = settings,
                     player = playerEntity!!
                 )

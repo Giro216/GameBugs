@@ -48,13 +48,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
 import com.example.gamebugs.dataBase.model.PlayerEntity
-import com.example.gamebugs.dataBase.model.viewModel.GameViewModel
-import com.example.gamebugs.dataBase.model.viewModel.PlayerViewModel
 import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
 import com.example.gamebugs.model.BugType
+import com.example.gamebugs.model.viewModel.CurrencyViewModel
+import com.example.gamebugs.model.viewModel.GameViewModel
+import com.example.gamebugs.model.viewModel.PlayerViewModel
+import com.example.gamebugs.network.repository.MockMetalCurrencyRepository
 import com.example.gamebugs.ui.config.Screens
 import com.example.gamebugs.ui.theme.GameBugsTheme
 import kotlinx.coroutines.delay
@@ -67,7 +69,8 @@ fun GameHandler(
     settings: Settings,
     player: PlayerEntity,
     gameViewModel: GameViewModel,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    currencyViewModel: CurrencyViewModel
 ) {
     val configuration = LocalConfiguration.current
     val context = LocalContext.current
@@ -126,6 +129,7 @@ fun GameHandler(
     LaunchedEffect(Unit) {
         try {
             screamSoundId = soundPool.load(context, R.raw.falling_scream, 1)
+            currencyViewModel.loadGoldPrice()
         } catch (e: Exception) {
             print(e.message)
         }
@@ -211,13 +215,26 @@ fun GameHandler(
 
     fun addBonusBug() {
         if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
-            if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
+            if (bugs.none { bug -> bug.type == BugType.BONUSBUG && bug.isAlive() }){
                 val bonusBug = BugFactory.createBonusBug(onBonusActivated = ::activateGravityEffect)
                 bonusBug.setRandomPosition(
                     configuration.screenWidthDp - 80,
                     configuration.screenHeightDp - 80
                 )
                 bugs = bugs + bonusBug
+            }
+        }
+    }
+
+    fun addGoldBug(){
+        if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
+            if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
+                val goldBug = BugFactory.createGoldBug(currencyViewModel.getGoldReward())
+                goldBug.setRandomPosition(
+                    configuration.screenWidthDp - 80,
+                    configuration.screenHeightDp - 80
+                )
+                bugs = bugs + goldBug
             }
         }
     }
@@ -254,14 +271,22 @@ fun GameHandler(
         }
     }
 
-    var lastBonusInterval by remember { mutableIntStateOf(-1) }
+    var lastBonusInterval by remember { mutableIntStateOf(0) }
+    var lastGoldenCockroachTime by remember { mutableIntStateOf(0) }
     LaunchedEffect(gameState, gameTime) {
         if (gameState == "playing") {
-            val currentInterval = gameTime / bonusInterval
+            val goldenInterval = 20
+            val currentBonusInterval = gameTime / bonusInterval
+            val currentGoldInterval = gameTime / goldenInterval
 
-            if (gameTime > 0 && currentInterval > lastBonusInterval && !isGravityEffectActive) {
-                lastBonusInterval = currentInterval
+            if (gameTime > 0 && currentBonusInterval > lastBonusInterval && !isGravityEffectActive) {
+                lastBonusInterval = currentBonusInterval
                 addBonusBug()
+            }
+
+            if (gameTime > 0 && currentGoldInterval > lastGoldenCockroachTime) {
+                lastGoldenCockroachTime = currentGoldInterval
+                addGoldBug()
             }
         }
     }
@@ -502,12 +527,17 @@ fun GameHandlerPreview() {
                 repository = MockPlayerRepository()
             )
 
+            val currencyViewModel = CurrencyViewModel(
+                repository = MockMetalCurrencyRepository()
+            )
+
             GameHandler(
                 navController = mockNavController,
                 settings = mockSettings,
                 player = mockPlayer,
                 gameViewModel = gameViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
+                currencyViewModel = currencyViewModel
             )
         }
     }
