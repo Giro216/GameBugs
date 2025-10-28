@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">GameBugs</string>
     <string name="Rules">1. Первое правило бойцовского клуба - не рассказывать о бойцовском клубе.</string>
+    <string name="appwidget_text">Курс золота</string>
+    <string name="add_widget">Add widget</string>
+    <string name="app_widget_description">Виджет курса золота</string>
+    <string name="Loading">Загрузка...</string>
+    <string name="Update">Обновить</string>
 </resources>
