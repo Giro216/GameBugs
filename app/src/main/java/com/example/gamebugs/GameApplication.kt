@@ -37,14 +37,15 @@ class GameApplication : Application() {
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
 
+        val serializer = org.simpleframework.xml.core.Persister()
+
         Retrofit.Builder()
             .baseUrl("https://www.cbr.ru/")
             .client(client)
-            .addConverterFactory(SimpleXmlConverterFactory.create())
+            .addConverterFactory(SimpleXmlConverterFactory.create(serializer))
             .build()
             .create(CbApiService::class.java)
     }
-
     val goldCurrencyRepository: GoldCurrencyRepository by lazy {
         GoldCurrencyRepository(cbrApi)
     }

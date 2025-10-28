@@ -7,16 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 
-interface IMetalCurrencyRepository{
-    val price: StateFlow<Double>
-    val isLoading: StateFlow<Boolean>
-    val error: StateFlow<String?>
-
-    suspend fun loadPrice()
-    fun getReward(): Int
-    fun getFormattedPrice(): String
-}
-
 class GoldCurrencyRepository (
     private val cbApiService: CbApiService
 ) : IMetalCurrencyRepository {
@@ -35,9 +25,14 @@ class GoldCurrencyRepository (
         _error.value = null
 
         try {
-            val currDate = SimpleDateFormat("dd/mm/yyyy").format(Date())
+            val currDate = SimpleDateFormat("dd/MM/yyyy").format(Date())
+            println("Запрос курса на дату: $currDate")
 
             val response = cbApiService.getGoldPrices(currDate, currDate)
+            println("Ответ получен, записей: ${response.records.size}")
+            response.records.forEach { record ->
+                println("Record: code=${record.code}, buy=${record.buy}, sell=${record.sell}")
+            }
 
             val goldRecord = response.records.find{it.isGold()}
 
