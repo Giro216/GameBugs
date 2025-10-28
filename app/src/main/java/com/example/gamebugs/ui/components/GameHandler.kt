@@ -129,6 +129,7 @@ fun GameHandler(
     LaunchedEffect(Unit) {
         try {
             screamSoundId = soundPool.load(context, R.raw.falling_scream, 1)
+            currencyViewModel.loadGoldPrice()
         } catch (e: Exception) {
             print(e.message)
         }
@@ -214,13 +215,26 @@ fun GameHandler(
 
     fun addBonusBug() {
         if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
-            if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
+            if (bugs.none { bug -> bug.type == BugType.BONUSBUG && bug.isAlive() }){
                 val bonusBug = BugFactory.createBonusBug(onBonusActivated = ::activateGravityEffect)
                 bonusBug.setRandomPosition(
                     configuration.screenWidthDp - 80,
                     configuration.screenHeightDp - 80
                 )
                 bugs = bugs + bonusBug
+            }
+        }
+    }
+
+    fun addGoldBug(){
+        if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
+            if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
+                val goldBug = BugFactory.createGoldBug(currencyViewModel.getGoldReward())
+                goldBug.setRandomPosition(
+                    configuration.screenWidthDp - 80,
+                    configuration.screenHeightDp - 80
+                )
+                bugs = bugs + goldBug
             }
         }
     }
@@ -257,14 +271,22 @@ fun GameHandler(
         }
     }
 
-    var lastBonusInterval by remember { mutableIntStateOf(-1) }
+    var lastBonusInterval by remember { mutableIntStateOf(0) }
+    var lastGoldenCockroachTime by remember { mutableIntStateOf(0) }
     LaunchedEffect(gameState, gameTime) {
         if (gameState == "playing") {
-            val currentInterval = gameTime / bonusInterval
+            val goldenInterval = 20
+            val currentBonusInterval = gameTime / bonusInterval
+            val currentGoldInterval = gameTime / goldenInterval
 
-            if (gameTime > 0 && currentInterval > lastBonusInterval && !isGravityEffectActive) {
-                lastBonusInterval = currentInterval
+            if (gameTime > 0 && currentBonusInterval > lastBonusInterval && !isGravityEffectActive) {
+                lastBonusInterval = currentBonusInterval
                 addBonusBug()
+            }
+
+            if (gameTime > 0 && currentGoldInterval > lastGoldenCockroachTime) {
+                lastGoldenCockroachTime = currentGoldInterval
+                addGoldBug()
             }
         }
     }

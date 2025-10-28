@@ -5,6 +5,7 @@ object BugFactory {
     fun createCockroachBug(speedFactor: Float): Bug = CockroachBug(speedFactor)
     fun createRhinocerosBug(speedFactor: Float): Bug = RhinocerosBug(speedFactor)
     fun createBonusBug(onBonusActivated: () -> Unit = {}): Bug = BonusBug(onBonusActivated)
+    fun createGoldBug(goldReward: Int): Bug = GoldBug(goldReward)
 
     fun createRandomBug(gameSpeed: Float): Bug {
         return when ((1..3).random()) {
