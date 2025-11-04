@@ -113,7 +113,6 @@ fun GameHandler(
             .build()
     }
 
-
     val soundPool = remember {
         SoundPool.Builder()
             .setMaxStreams(4)
@@ -121,10 +120,40 @@ fun GameHandler(
             .build()
     }
 
-
     var screamSoundId by remember { mutableIntStateOf(0) }
     var soundsLoaded by remember { mutableStateOf(false) }
 
+    val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+    val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
+
+    val sensorListener = remember {
+        object : SensorEventListener {
+            private var lastSensorUpdate = 0L
+            override fun onSensorChanged(event: SensorEvent?) {
+                val now = System.currentTimeMillis()
+                if (now - lastSensorUpdate < 50L) return
+                lastSensorUpdate = now
+                if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER && isGravityEffectActive) {
+                    accelerometerX = -event.values[0]
+                    accelerometerY = event.values[1]
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+    }
+
+    DisposableEffect(sensorListener) {
+        sensorManager.registerListener(
+            sensorListener,
+            accelerometer,
+            SensorManager.SENSOR_DELAY_GAME
+        )
+
+        onDispose {
+            sensorManager.unregisterListener(sensorListener)
+        }
+    }
 
     LaunchedEffect(Unit) {
         try {
@@ -135,13 +164,11 @@ fun GameHandler(
         }
     }
 
-
     DisposableEffect(soundPool) {
         val listener = SoundPool.OnLoadCompleteListener { _, _, status ->
             if (status == 0) soundsLoaded = true
         }
         soundPool.setOnLoadCompleteListener(listener)
-
 
         onDispose {
             soundPool.unload(screamSoundId)
@@ -149,44 +176,11 @@ fun GameHandler(
         }
     }
 
-
     fun activateGravityEffect() {
         isGravityEffectActive = true
         gravityEffectEndTime = System.currentTimeMillis() + 5000
         if (soundsLoaded && screamSoundId != 0) {
             soundPool.play(screamSoundId, 0.5f, 0.5f, 1, 0, 1f)
-        }
-    }
-
-    val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-
-    val sensorListener = remember {
-        object : SensorEventListener {
-            private var lastSensorUpdate = 0L
-            override fun onSensorChanged(event: SensorEvent?) {
-                val now = System.currentTimeMillis()
-                if (now - lastSensorUpdate < 50L) return
-                lastSensorUpdate = now
-                if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER && isGravityEffectActive) {
-                    accelerometerX = - event.values[0]
-                    accelerometerY = event.values[1]
-                }
-            }
-
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-        }
-    }
-
-    DisposableEffect(Unit) {
-        sensorManager.registerListener(
-            sensorListener,
-            accelerometer,
-            SensorManager.SENSOR_DELAY_GAME
-        )
-
-        onDispose {
-            sensorManager.unregisterListener(sensorListener)
         }
     }
 
@@ -271,8 +265,9 @@ fun GameHandler(
         }
     }
 
-    var lastBonusInterval by rememberSaveable { mutableIntStateOf(0) }
-    var lastGoldenCockroachTime by rememberSaveable { mutableIntStateOf(0) }
+    var lastBonusInterval by remember { mutableIntStateOf(0) }
+    var lastGoldenCockroachTime by remember { mutableIntStateOf(0) }
+
     LaunchedEffect(gameState, gameTime) {
         if (gameState == "playing") {
             val goldenInterval = 20
@@ -298,6 +293,9 @@ fun GameHandler(
         gameTime = 0
         roundTimeLeft = playerViewModel.settings.roundDuration
         bugs = createInitialBugs()
+        accelerometerX = 0f
+        accelerometerY = 0f
+        isGravityEffectActive = false
     }
 
     fun handleMiss() {
@@ -502,22 +500,6 @@ fun GameHandlerPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             val mockNavController = rememberNavController()
-
-            val mockSettings = Settings(
-                gameSpeed = 1.5f,
-                maxBeetles = 8,
-                bonusInterval = 10,
-                roundDuration = 120
-            )
-
-            val mockPlayer = PlayerEntity(
-                name = "Тестовый Игрок",
-                gender = "Муж",
-                course = "3 курс",
-                difficulty = 3,
-                birthDate = System.currentTimeMillis(),
-                zodiac = "Овен"
-            )
 
             val gameViewModel = GameViewModel(
                 repository = MockRecordsRepository()
