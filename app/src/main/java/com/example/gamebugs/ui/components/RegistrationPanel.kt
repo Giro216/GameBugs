@@ -39,7 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,8 +67,8 @@ fun RegistrationPanel(
     onDeletedPlayer: (PlayerEntity) -> Unit,
     playerViewModel: PlayerViewModel
 ) {
-    var currentScreen by remember { mutableStateOf<RegistrationScreen>(RegistrationScreen.Start) }
-    var selectedExistingPlayer by remember { mutableStateOf<PlayerEntity?>(null) }
+    var currentScreen by rememberSaveable { mutableStateOf(RegistrationScreen.Start) }
+    var selectedExistingPlayerId by rememberSaveable { mutableLongStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -90,7 +90,7 @@ fun RegistrationPanel(
                 SelectExistingScreen(
                     existingPlayers = existingPlayers,
                     onPlayerSelected = { player ->
-                        selectedExistingPlayer = player
+                        selectedExistingPlayerId = player.id
                         onPlayerSelected(player)
                         currentScreen = RegistrationScreen.Start
                     },
@@ -105,17 +105,17 @@ fun RegistrationPanel(
                         onRegisteredPlayer(player)
                         currentScreen = RegistrationScreen.Start
                     },
-                    onBack = { currentScreen = RegistrationScreen.Start },
-                    playerViewModel = playerViewModel
+                    onBack = { currentScreen = RegistrationScreen.Start }
                 )
             }
         }
 
-        selectedExistingPlayer?.let { player ->
-            Spacer(modifier = Modifier.height(16.dp))
-            PlayerInfoCard(
-                player = player
-            )
+        if (selectedExistingPlayerId != 0L){
+            val player = playerViewModel.getPlayerById(selectedExistingPlayerId)
+            player?.let { nonNullPlayer ->
+                Spacer(modifier = Modifier.height(16.dp))
+                PlayerInfoCard(player = nonNullPlayer)
+            }
         }
     }
 }
@@ -176,7 +176,7 @@ private fun SelectExistingScreen(
     onDeletedPlayer: (PlayerEntity) -> Unit,
     onBack: () -> Unit
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -247,15 +247,14 @@ private fun SelectExistingScreen(
 
 @Composable
 private fun CreateNewScreen(
-    playerViewModel: PlayerViewModel,
     onRegisteredPlayer: (PlayerEntity) -> Unit,
     onBack: () -> Unit
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var course by remember { mutableStateOf("") }
-    var difficulty by remember { mutableFloatStateOf(1f) }
-    var birthDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var fullName by rememberSaveable { mutableStateOf("") }
+    var gender by rememberSaveable { mutableStateOf("") }
+    var course by rememberSaveable { mutableStateOf("") }
+    var difficulty by rememberSaveable { mutableFloatStateOf(1f) }
+    var birthDate by rememberSaveable { mutableLongStateOf(System.currentTimeMillis()) }
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -337,8 +336,8 @@ private fun CreateNewScreen(
         }
 
         item {
-            var expanded by remember { mutableStateOf(false) }
-            var selectedCourse by remember { mutableStateOf("Выберите курс") }
+            var expanded by rememberSaveable { mutableStateOf(false) }
+            var selectedCourse by rememberSaveable { mutableStateOf("Выберите курс") }
 
             Box(modifier = Modifier.padding(vertical = 8.dp)) {
                 OutlinedButton(
@@ -516,10 +515,10 @@ fun PrintCardInfo(player: PlayerEntity) {
     }
 }
 
-sealed class RegistrationScreen {
-    object Start : RegistrationScreen()
-    object SelectExisting : RegistrationScreen()
-    object CreateNew : RegistrationScreen()
+enum class RegistrationScreen {
+    Start,
+    SelectExisting,
+    CreateNew
 }
 
 fun getZodiac(dateMillis: Long): String {

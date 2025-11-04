@@ -20,7 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.gamebugs.R
-import com.example.gamebugs.dataBase.model.PlayerEntity
 import com.example.gamebugs.dataBase.repository.MockPlayerRepository
 import com.example.gamebugs.dataBase.repository.MockRecordsRepository
+import com.example.gamebugs.model.Settings
 import com.example.gamebugs.model.viewModel.GameViewModel
 import com.example.gamebugs.model.viewModel.PlayerViewModel
 import com.example.gamebugs.ui.config.Screens
@@ -41,16 +41,13 @@ import com.example.gamebugs.ui.theme.GameBugsTheme
 @Composable
 fun MainMenuPanel(
     navController: NavHostController,
-    player: PlayerEntity?,
-    settings: Settings,
-    onPlayerUpdated: (PlayerEntity?) -> Unit,
     gameViewModel: GameViewModel,
     playerViewModel: PlayerViewModel,
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val tabs = listOf("Регистрация", "Правила", "Рекорды", "Список авторов", "Настройки")
     val existingPlayers by playerViewModel.players.collectAsState(emptyList())
-    var isRegistered by remember { mutableStateOf(player != null) }
+    var isRegistered by rememberSaveable { mutableStateOf(playerViewModel.playerEntity != null) }
 
     LaunchedEffect(Unit) {
         playerViewModel.loadPlayers()
@@ -69,9 +66,9 @@ fun MainMenuPanel(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        if (isRegistered && player != null) {
+        if (isRegistered && playerViewModel.playerEntity != null) {
             Text(
-                text = "Игрок: ${player.name}",
+                text = "Игрок: ${playerViewModel.playerEntity!!.name}",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
@@ -91,11 +88,11 @@ fun MainMenuPanel(
             ) {
                 Button(
                     onClick = {
-                        if (player != null) {
+                        if (playerViewModel.playerEntity != null) {
                             navController.navigate(Screens.Game.route)
                         }
                     },
-                    enabled = player != null
+                    enabled = playerViewModel.playerEntity != null
                 ) {
                     Text(
                         text = "Новая игра",
@@ -130,15 +127,15 @@ fun MainMenuPanel(
                         RegistrationPanel(
                             onRegisteredPlayer = { newPlayer ->
                                 playerViewModel.savePlayer(newPlayer)
-                                onPlayerUpdated(newPlayer)
+                                playerViewModel.playerEntity = newPlayer
                                 isRegistered = true
-                                settings.gameDifficult = newPlayer.difficulty
+                                playerViewModel.settings.gameDifficult = newPlayer.difficulty
                             },
                             existingPlayers = existingPlayers,
                             onPlayerSelected = { selectedPlayer ->
-                                onPlayerUpdated(selectedPlayer)
+                                playerViewModel.playerEntity = selectedPlayer
                                 isRegistered = true
-                                settings.gameDifficult = selectedPlayer.difficulty
+                                playerViewModel.settings.gameDifficult = selectedPlayer.difficulty
                             },
                             onDeletedPlayer = { deletedPlayer ->
                                 playerViewModel.deletePlayer(deletedPlayer)
@@ -150,9 +147,9 @@ fun MainMenuPanel(
                     2 -> RecordsPanel(gameViewModel)
                     3 -> AuthorsPanel()
                     4 -> SettingsPanel(
-                        settings,
+                        playerViewModel.settings,
                         onSavedSettings = { savedSettings ->
-                            settings.copy(savedSettings)
+                            playerViewModel.settings.copy(savedSettings)
                         }
                     )
                 }
@@ -189,9 +186,6 @@ fun PreviewMainMenuPanel(){
 
             MainMenuPanel(
                 navController = navController,
-                player = null,
-                settings = Settings(),
-                onPlayerUpdated = {},
                 gameViewModel = gameViewModel,
                 playerViewModel = playerViewModel
             )

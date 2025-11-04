@@ -14,3 +14,28 @@ data class PlayerEntity(
     val birthDate: Long,
     val zodiac: String
 )
+
+//val PlayerSaver = Saver<PlayerEntity?, List<Any>>(
+//    save = { playerEntity ->
+//        listOf(
+//            playerEntity?.name ?: ,
+//            playerEntity.id,
+//            playerEntity.course,
+//            playerEntity.gender,
+//            playerEntity.birthDate,
+//            playerEntity.difficulty,
+//            playerEntity.zodiac
+//        )
+//    },
+//    restore = { restored ->
+//        PlayerEntity(
+//            name = restored[0] as String,
+//            id = restored[1] as Long,
+//            course = restored[2] as String,
+//            gender = restored[3] as String,
+//            birthDate = restored[4] as Long,
+//            difficulty = restored[5] as Int,
+//            zodiac = restored[6] as String,
+//        )
+//    }
+//)

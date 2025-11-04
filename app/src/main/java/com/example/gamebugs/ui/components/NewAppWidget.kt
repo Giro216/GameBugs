@@ -7,18 +7,18 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
-import com.example.gamebugs.R
-import com.example.gamebugs.MainActivity
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.core.content.edit
+import com.example.gamebugs.MainActivity
+import com.example.gamebugs.R
 import com.example.gamebugs.network.service.CbApiService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.simplexml.SimpleXmlConverterFactory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class NewAppWidget : AppWidgetProvider() {

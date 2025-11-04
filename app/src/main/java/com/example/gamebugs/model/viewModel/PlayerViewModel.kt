@@ -4,14 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gamebugs.dataBase.model.PlayerEntity
 import com.example.gamebugs.dataBase.repository.IPlayerRepository
+import com.example.gamebugs.model.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class PlayerViewModel(private val repository: IPlayerRepository) : ViewModel() {
 
     private val _players = MutableStateFlow<List<PlayerEntity>>(emptyList())
     val players: StateFlow<List<PlayerEntity>> = _players
+
+    var playerEntity: PlayerEntity? = null
+    var settings = Settings()
 
     fun loadPlayers() {
         viewModelScope.launch {
@@ -39,5 +44,17 @@ class PlayerViewModel(private val repository: IPlayerRepository) : ViewModel() {
             result = repository.isPlayerExistByName(name)
         }
         return result
+    }
+
+    // PlayerViewModel.kt
+    fun getPlayerById(playerId: Long): PlayerEntity? {
+        return try {
+            runBlocking {
+                repository.getPlayerById(playerId)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }

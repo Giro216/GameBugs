@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +54,7 @@ import com.example.gamebugs.dataBase.repository.MockRecordsRepository
 import com.example.gamebugs.model.Bug
 import com.example.gamebugs.model.BugFactory
 import com.example.gamebugs.model.BugType
+import com.example.gamebugs.model.Settings
 import com.example.gamebugs.model.viewModel.CurrencyViewModel
 import com.example.gamebugs.model.viewModel.GameViewModel
 import com.example.gamebugs.model.viewModel.PlayerViewModel
@@ -66,31 +68,29 @@ import kotlin.math.max
 @Composable
 fun GameHandler(
     navController: NavHostController,
-    settings: Settings,
-    player: PlayerEntity,
     gameViewModel: GameViewModel,
     playerViewModel: PlayerViewModel,
     currencyViewModel: CurrencyViewModel
 ) {
     val configuration = LocalConfiguration.current
     val context = LocalContext.current
-    var totalScore by remember { mutableIntStateOf(0) }
-    var gameState by remember { mutableStateOf("playing") }
-    var gameSessionKey by remember { mutableIntStateOf(0) }
-    var gameTime by remember { mutableIntStateOf(0) }
-    var roundTimeLeft by remember { mutableIntStateOf(settings.roundDuration) }
-    var lastUpdateTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var totalScore by rememberSaveable { mutableIntStateOf(0) }
+    var gameState by rememberSaveable { mutableStateOf("playing") }
+    var gameSessionKey by rememberSaveable { mutableIntStateOf(0) }
+    var gameTime by rememberSaveable { mutableIntStateOf(0) }
+    var roundTimeLeft by rememberSaveable { mutableIntStateOf(playerViewModel.settings.roundDuration) }
+    var lastUpdateTime by rememberSaveable { mutableLongStateOf(System.currentTimeMillis()) }
 
     var screenSize by remember { mutableStateOf(Pair(configuration.screenWidthDp.toFloat(), configuration.screenHeightDp.toFloat())) }
     val screenWidth = screenSize.first
     val screenHeight = screenSize.second
 
-    val bonusInterval = settings.bonusInterval
-    val roundDuration = settings.roundDuration
+    val bonusInterval = playerViewModel.settings.bonusInterval
+    val roundDuration = playerViewModel.settings.roundDuration
 
     var penalty by remember {
         mutableIntStateOf(
-        when (settings.gameDifficult){
+        when (playerViewModel.settings.gameDifficult){
             1 -> 2
             2 -> 4
             3 -> 10
@@ -199,8 +199,8 @@ fun GameHandler(
     }
 
     fun createInitialBugs(): List<Bug> {
-        return List(settings.maxBeetles) {
-            val bug = BugFactory.createRandomBug(settings.gameSpeed)
+        return List(playerViewModel.settings.maxBeetles) {
+            val bug = BugFactory.createRandomBug(playerViewModel.settings.gameSpeed)
             bug.setRandomPosition(
                 configuration.screenWidthDp - 80,
                 configuration.screenHeightDp - 80
@@ -209,12 +209,12 @@ fun GameHandler(
         }
     }
 
-    var bugs by remember(gameSessionKey) {
+    var bugs by rememberSaveable(gameSessionKey) {
         mutableStateOf(createInitialBugs())
     }
 
     fun addBonusBug() {
-        if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
+        if (bugs.count { bug -> bug.isAlive() } < playerViewModel.settings.maxBeetles) {
             if (bugs.none { bug -> bug.type == BugType.BONUSBUG && bug.isAlive() }){
                 val bonusBug = BugFactory.createBonusBug(onBonusActivated = ::activateGravityEffect)
                 bonusBug.setRandomPosition(
@@ -227,7 +227,7 @@ fun GameHandler(
     }
 
     fun addGoldBug(){
-        if (bugs.count { bug -> bug.isAlive() } < settings.maxBeetles) {
+        if (bugs.count { bug -> bug.isAlive() } < playerViewModel.settings.maxBeetles) {
             if (bugs.none { bug -> bug.type == BugType.GOLDBUG && bug.isAlive() }){
                 val goldBug = BugFactory.createGoldBug(currencyViewModel.getGoldReward())
                 goldBug.setRandomPosition(
@@ -271,8 +271,8 @@ fun GameHandler(
         }
     }
 
-    var lastBonusInterval by remember { mutableIntStateOf(0) }
-    var lastGoldenCockroachTime by remember { mutableIntStateOf(0) }
+    var lastBonusInterval by rememberSaveable { mutableIntStateOf(0) }
+    var lastGoldenCockroachTime by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(gameState, gameTime) {
         if (gameState == "playing") {
             val goldenInterval = 20
@@ -296,7 +296,7 @@ fun GameHandler(
         gameSessionKey++
         gameState = "playing"
         gameTime = 0
-        roundTimeLeft = settings.roundDuration
+        roundTimeLeft = playerViewModel.settings.roundDuration
         bugs = createInitialBugs()
     }
 
@@ -321,7 +321,7 @@ fun GameHandler(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = player.name,
+                    text = playerViewModel.playerEntity?.name ?: "Not name",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
@@ -372,10 +372,10 @@ fun GameHandler(
         LaunchedEffect(Unit) {
             delay(3000)
             gameViewModel.saveRecord(
-                playerId = player.id,
+                playerId = playerViewModel.playerEntity?.id ?: 0,
                 score = totalScore,
-                difficulty = settings.gameDifficult,
-                playerName = player.name
+                difficulty = playerViewModel.settings.gameDifficult,
+                playerName = playerViewModel.playerEntity?.name ?: "Not"
             )
             navController.popBackStack(Screens.MainMenu.route, inclusive = false)
         }
@@ -533,8 +533,6 @@ fun GameHandlerPreview() {
 
             GameHandler(
                 navController = mockNavController,
-                settings = mockSettings,
-                player = mockPlayer,
                 gameViewModel = gameViewModel,
                 playerViewModel = playerViewModel,
                 currencyViewModel = currencyViewModel

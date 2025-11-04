@@ -16,20 +16,22 @@ import com.example.gamebugs.ui.config.AppNavigation
 import com.example.gamebugs.ui.theme.GameBugsTheme
 
 class MainActivity : ComponentActivity() {
-    private val gameViewModel: GameViewModel by viewModels {
-        (application as GameApplication).appViewModelFactory
-    }
-
-    private val playerViewModel: PlayerViewModel by viewModels {
-        (application as GameApplication).appViewModelFactory
-    }
-
-    private val currencyViewModel: CurrencyViewModel by viewModels {
-        (application as GameApplication).appViewModelFactory
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val gameViewModel: GameViewModel by viewModels {
+            (application as GameApplication).appViewModelFactory
+        }
+
+        val playerViewModel: PlayerViewModel by viewModels {
+            (application as GameApplication).appViewModelFactory
+        }
+
+        val currencyViewModel: CurrencyViewModel by viewModels {
+            (application as GameApplication).appViewModelFactory
+        }
+
         enableEdgeToEdge()
 
         setContent {

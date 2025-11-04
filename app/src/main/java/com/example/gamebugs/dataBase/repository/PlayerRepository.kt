@@ -8,7 +8,7 @@ interface IPlayerRepository {
     suspend fun getAllPlayers(): List<PlayerEntity>
     suspend fun deletePlayer(player: PlayerEntity)
     suspend fun getPlayerByName(name: String): PlayerEntity?
-
+    suspend fun getPlayerById(id: Long): PlayerEntity?
     suspend fun isPlayerExistByName(name: String) : Boolean
 }
 
@@ -32,6 +32,10 @@ class PlayerRepository(private val playerDao: PlayerDao) : IPlayerRepository {
 
     override suspend fun getPlayerByName(name: String): PlayerEntity? {
         return playerDao.getPlayerByName(name)
+    }
+
+    override suspend fun getPlayerById(id: Long): PlayerEntity? {
+        return playerDao.getPlayerById(id);
     }
 
     override suspend fun isPlayerExistByName(name: String): Boolean {
@@ -80,5 +84,9 @@ class MockPlayerRepository : IPlayerRepository {
 
     override suspend fun isPlayerExistByName(name: String): Boolean {
         return true
+    }
+
+    override suspend fun getPlayerById(id: Long): PlayerEntity? {
+        return mockPlayers.find { it.id == id }
     }
 }

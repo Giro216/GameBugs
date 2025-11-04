@@ -17,22 +17,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gamebugs.model.Settings
 import com.example.gamebugs.ui.theme.GameBugsTheme
-
-data class Settings(
-    var gameDifficult: Int = 3,
-    var gameSpeed: Float = 1.0f,
-    var maxBeetles: Int = 10,
-    var bonusInterval: Int = 15,
-    var roundDuration: Int = 60
-)
 
 @Composable
 fun SettingsPanel(
@@ -40,10 +33,10 @@ fun SettingsPanel(
     onSavedSettings: (Settings) -> Unit = {}
 ) {
 
-    var gameSpeed by remember { mutableStateOf(usefulSettings.gameSpeed.toString()) }
-    var maxBeetles by remember { mutableStateOf(usefulSettings.maxBeetles.toString()) }
-    var bonusInterval by remember { mutableStateOf(usefulSettings.bonusInterval.toString()) }
-    var roundDuration by remember { mutableStateOf(usefulSettings.roundDuration.toString()) }
+    var gameSpeed by rememberSaveable { mutableStateOf(usefulSettings.gameSpeed.toString()) }
+    var maxBeetles by rememberSaveable { mutableStateOf(usefulSettings.maxBeetles.toString()) }
+    var bonusInterval by rememberSaveable { mutableStateOf(usefulSettings.bonusInterval.toString()) }
+    var roundDuration by rememberSaveable { mutableStateOf(usefulSettings.roundDuration.toString()) }
 
     val scrollState = rememberScrollState()
 
